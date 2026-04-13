@@ -1,0 +1,121 @@
+import { t, type UnwrapSchema } from "elysia";
+
+export const ProductModel = {
+  createBody: t.Object({
+    nameEn: t.String({ minLength: 1 }),
+    nameAr: t.String({ minLength: 1 }),
+    descriptionEn: t.String(),
+    descriptionAr: t.String(),
+    shortDescriptionEn: t.Optional(t.String()),
+    shortDescriptionAr: t.Optional(t.String()),
+    metaTitleEn: t.Optional(t.String()),
+    metaTitleAr: t.Optional(t.String()),
+    metaDescriptionEn: t.Optional(t.String()),
+    metaDescriptionAr: t.Optional(t.String()),
+    gender: t.Union([t.Literal("MEN"), t.Literal("WOMEN"), t.Literal("UNISEX")]),
+    collectionId: t.Optional(t.String()),
+    isActive: t.Optional(t.Boolean()),
+    isFeatured: t.Optional(t.Boolean()),
+    badge: t.Optional(t.Union([t.Literal("NEW"), t.Literal("BESTSELLER"), t.Literal("LIMITED_EDITION"), t.Null()])),
+    isTrending: t.Optional(t.Boolean()),
+    position: t.Optional(t.Number({ minimum: 0 })),
+    materialId: t.Optional(t.Union([t.String(), t.Null()])),
+    stoneId: t.Optional(t.Union([t.String(), t.Null()])),
+    clarityId: t.Optional(t.Union([t.String(), t.Null()])),
+    variants: t.Optional(
+      t.Array(
+        t.Object({
+          nameEn: t.String({ minLength: 1 }),
+          nameAr: t.String({ minLength: 1 }),
+          sku: t.Optional(t.String()),
+          price: t.Number({ minimum: 0 }),
+          compareAtPrice: t.Optional(t.Number({ minimum: 0 })),
+          stock: t.Optional(t.Number({ minimum: 0 })),
+          isActive: t.Optional(t.Boolean()),
+        })
+      )
+    ),
+  }),
+  updateBody: t.Object({
+    nameEn: t.Optional(t.String({ minLength: 1 })),
+    nameAr: t.Optional(t.String({ minLength: 1 })),
+    descriptionEn: t.Optional(t.String()),
+    descriptionAr: t.Optional(t.String()),
+    shortDescriptionEn: t.Optional(t.String()),
+    shortDescriptionAr: t.Optional(t.String()),
+    metaTitleEn: t.Optional(t.String()),
+    metaTitleAr: t.Optional(t.String()),
+    metaDescriptionEn: t.Optional(t.String()),
+    metaDescriptionAr: t.Optional(t.String()),
+    gender: t.Optional(t.Union([t.Literal("MEN"), t.Literal("WOMEN"), t.Literal("UNISEX")])),
+    collectionId: t.Optional(t.Union([t.String(), t.Null()])),
+    isActive: t.Optional(t.Boolean()),
+    isFeatured: t.Optional(t.Boolean()),
+    badge: t.Optional(t.Union([t.Literal("NEW"), t.Literal("BESTSELLER"), t.Literal("LIMITED_EDITION"), t.Null()])),
+    isTrending: t.Optional(t.Boolean()),
+    position: t.Optional(t.Number({ minimum: 0 })),
+    materialId: t.Optional(t.Union([t.String(), t.Null()])),
+    stoneId: t.Optional(t.Union([t.String(), t.Null()])),
+    clarityId: t.Optional(t.Union([t.String(), t.Null()])),
+    defaultVariantId: t.Optional(t.Union([t.String(), t.Null()])),
+    hoverVariantId: t.Optional(t.Union([t.String(), t.Null()])),
+  }),
+  createVariantBody: t.Object({
+    nameEn: t.String({ minLength: 1 }),
+    nameAr: t.String({ minLength: 1 }),
+    sku: t.Optional(t.String()),
+    price: t.Number({ minimum: 0 }),
+    compareAtPrice: t.Optional(t.Number({ minimum: 0 })),
+    stock: t.Optional(t.Number({ minimum: 0 })),
+    isActive: t.Optional(t.Boolean()),
+    metaTitleEn: t.Optional(t.String()),
+    metaTitleAr: t.Optional(t.String()),
+    metaDescriptionEn: t.Optional(t.String()),
+    metaDescriptionAr: t.Optional(t.String()),
+  }),
+  updateVariantBody: t.Object({
+    nameEn: t.Optional(t.String({ minLength: 1 })),
+    nameAr: t.Optional(t.String({ minLength: 1 })),
+    sku: t.Optional(t.String()),
+    price: t.Optional(t.Number({ minimum: 0 })),
+    compareAtPrice: t.Optional(t.Number({ minimum: 0 })),
+    stock: t.Optional(t.Number({ minimum: 0 })),
+    isActive: t.Optional(t.Boolean()),
+    metaTitleEn: t.Optional(t.String()),
+    metaTitleAr: t.Optional(t.String()),
+    metaDescriptionEn: t.Optional(t.String()),
+    metaDescriptionAr: t.Optional(t.String()),
+  }),
+  listQuery: t.Object({
+    page: t.Optional(t.String()),
+    limit: t.Optional(t.String()),
+    gender: t.Optional(t.String()),
+    collectionId: t.Optional(t.String()),
+    collectionSlug: t.Optional(t.String()),
+    isActive: t.Optional(t.String()),
+    isFeatured: t.Optional(t.String()),
+    search: t.Optional(t.String()),
+    minPrice: t.Optional(t.String()),
+    maxPrice: t.Optional(t.String()),
+    sortBy: t.Optional(t.String()),
+    sortOrder: t.Optional(t.String()),
+    availability: t.Optional(t.String()),
+  }),
+  relatedProductsBody: t.Object({
+    collectionIds: t.Array(t.String()),
+    excludeProductIds: t.Array(t.String()),
+    limit: t.Optional(t.Number({ minimum: 1, maximum: 20 })),
+  }),
+  reorderBody: t.Object({
+    items: t.Array(
+      t.Object({
+        id: t.String(),
+        position: t.Number({ minimum: 0 }),
+      })
+    ),
+  }),
+} as const;
+
+export type ProductModel = {
+  [K in keyof typeof ProductModel]: UnwrapSchema<(typeof ProductModel)[K]>;
+};
