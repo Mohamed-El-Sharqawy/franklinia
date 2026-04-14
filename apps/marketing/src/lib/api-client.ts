@@ -53,16 +53,14 @@ export async function apiClient<T = unknown>(
     fetchOptions.body = JSON.stringify(body);
   }
 
-  if (cache) {
-    fetchOptions.cache = cache;
-  }
-
   if (next) {
     fetchOptions.next = next;
   }
 
-  if (signal) {
-    fetchOptions.signal = signal;
+  if (cache) {
+    fetchOptions.cache = cache;
+  } else if (next?.revalidate === 0) {
+    fetchOptions.cache = 'no-store';
   }
 
   // Add a default timeout of 10 seconds to prevent build hangs
@@ -95,6 +93,10 @@ export async function apiClient<T = unknown>(
       // Return a safe empty response structure to prevent build crashes
       // while still allowing ISR to update the page correctly at runtime
       console.warn(`[Build Phase] API unreachable: ${endpoint}. Using empty fallback.`);
+      
+      // Ensure this "empty" result isn't cached by Next.js
+      fetchOptions.cache = 'no-store';
+      
       return { success: false, data: [] } as any;
     }
 
