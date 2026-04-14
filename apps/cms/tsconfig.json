@@ -19,7 +19,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@backend/*": ["../backend/src/*"]
+      "@ecommerce/shared-types": ["../../packages/shared-types/src/index.ts"],
+      "@ecommerce/shared-utils": ["../../packages/shared-utils/src/index.ts"]
     }
   },
   "include": ["src", "vite-env.d.ts"]
