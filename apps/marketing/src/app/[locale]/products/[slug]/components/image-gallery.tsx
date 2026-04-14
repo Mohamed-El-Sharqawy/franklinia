@@ -142,13 +142,13 @@ export function ImageGallery({
             <>
               <button
                 onClick={isArabic ? nextImage : prevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/40 hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 invisible group-hover:visible"
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/40 hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all lg:opacity-0 lg:group-hover:opacity-100 lg:invisible lg:group-hover:visible"
               >
                 <ChevronLeft className="h-5 w-5 text-gray-800" />
               </button>
               <button
                 onClick={isArabic ? prevImage : nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/40 hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 invisible group-hover:visible"
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/40 hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all lg:opacity-0 lg:group-hover:opacity-100 lg:invisible lg:group-hover:visible"
               >
                 <ChevronRight className="h-5 w-5 text-gray-800" />
               </button>
