@@ -21,12 +21,17 @@ interface HeroCollectionsProps {
 export function HeroCollections({ collections, locale }: HeroCollectionsProps) {
   const isArabic = locale === "ar";
 
-  if (collections.length === 0) return null;
+  // Filter for abayas and modest-dresses, ordered by homeFeaturedPosition
+  const featuredCollections = collections
+    .filter(c => c.slug === "abayas" || c.slug === "modest-dresses")
+    .sort((a, b) => (a.homeFeaturedPosition ?? 0) - (b.homeFeaturedPosition ?? 0));
+
+  if (featuredCollections.length === 0) return null;
 
   return (
-    <section className="bg-white py-1">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-2">
-        {collections.slice(0, 3).map((collection, index) => (
+    <section className="mx-auto max-w-7xl px-4 py-16 md:py-24">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {featuredCollections.map((collection, index) => (
           <AnimateOnScroll
             key={collection.id}
             direction="up"
@@ -34,18 +39,18 @@ export function HeroCollections({ collections, locale }: HeroCollectionsProps) {
           >
             <Link
               href={`/collections/${collection.slug}`}
-              className="group relative block aspect-4/3 md:aspect-square overflow-hidden bg-neutral-100"
+              className="group relative block aspect-4/3 md:aspect-4/5 overflow-hidden bg-neutral-100"
             >
               <Image
-                src={collection.image?.url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=800&fit=crop"}
+                src={collection.image?.url || "/images/collections/modest-dresses.png"}
                 alt={isArabic ? collection.nameAr : collection.nameEn}
                 fill
                 className="object-cover transition-transform duration-1000 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 33vw"
+                sizes="(max-width: 768px) 100vw, 50vw"
               />
               {/* Overlay with text at bottom */}
-              <div className="absolute inset-x-0 bottom-0 py-10 md:py-16 flex flex-col items-center justify-end bg-linear-to-t from-black/20 via-transparent to-transparent text-white">
-                <h3 className="text-[10px] md:text-xs font-light uppercase tracking-[0.4em] transition-transform duration-700 group-hover:-translate-y-2">
+              <div className="absolute inset-x-0 bottom-0 py-12 md:py-20 flex flex-col items-center justify-end bg-linear-to-t from-black/30 via-transparent to-transparent text-white">
+                <h3 className="text-xs md:text-sm font-light uppercase tracking-[0.5em] transition-transform duration-700 group-hover:-translate-y-2">
                   {isArabic ? collection.nameAr : collection.nameEn}
                 </h3>
               </div>

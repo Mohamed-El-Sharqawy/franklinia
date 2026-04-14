@@ -126,11 +126,11 @@ export function HeroBanner({ banners, locale }: HeroBannerProps) {
           <Image
             src={banner.imageUrl}
             alt={isArabic ? banner.titleAr : banner.titleEn}
-            width={2560}
-            height={1440}
+            fill
             loading="eager"
             priority={index === 0}
             className="object-cover"
+            style={{ objectPosition: '25% center' }}
             sizes="100vw"
             draggable={false}
           />
