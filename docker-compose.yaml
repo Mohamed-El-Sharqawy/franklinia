@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    container_name: capella-backend
+    container_name: franklinia-backend
     restart: unless-stopped
     expose:
       - "3001"
@@ -25,7 +25,7 @@ services:
       - coolify-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.capella-backend.loadbalancer.server.port=3001"
+      - "traefik.http.services.franklinia-backend.loadbalancer.server.port=3001"
     healthcheck:
       test:
         [
@@ -44,7 +44,7 @@ services:
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
         - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
-    container_name: capella-marketing
+    container_name: franklinia-marketing
     restart: unless-stopped
     expose:
       - "3000"
@@ -60,7 +60,7 @@ services:
       - coolify-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.capella-marketing.loadbalancer.server.port=3000"
+      - "traefik.http.services.franklinia-marketing.loadbalancer.server.port=3000"
       - "traefik.docker.network=coolify"
     # healthcheck:
     #   test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/robots.txt"]
@@ -73,7 +73,7 @@ services:
     build:
       context: .
       dockerfile: apps/cms/Dockerfile
-    container_name: capella-cms
+    container_name: franklinia-cms
     restart: unless-stopped
     expose:
       - "80"
@@ -85,11 +85,11 @@ services:
       - app-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.capella-cms.loadbalancer.server.port=80"
+      - "traefik.http.services.franklinia-cms.loadbalancer.server.port=80"
 
   # stripe:
   #   image: stripe/stripe-cli:latest
-  #   container_name: capella-stripe
+  #   container_name: franklinia-stripe
   #   command: listen --forward-to http://localhost:3001/api/payments/webhook --api-key ${STRIPE_SECRET_KEY}
   #   environment:
   #     - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
