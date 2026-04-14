@@ -42,21 +42,21 @@ export function KeyFeatures({ attributes, locale }: KeyFeaturesProps) {
   // Required fields
   if (attributes.fabric) {
     features.push({
-      label: lang === "ar" ? "Premium" : "Fabric",
+      label: lang === "ar" ? "القماش" : "Fabric",
       value: fabricLabels[attributes.fabric]?.[lang] ?? attributes.fabric,
     });
   }
 
   if (attributes.fitType) {
     features.push({
-      label: lang === "ar" ? "Fit" : "Fit",
+      label: lang === "ar" ? "القصّة" : "Fit",
       value: fitTypeLabels[attributes.fitType]?.[lang] ?? attributes.fitType,
     });
   }
 
   if (attributes.sleeveStyle) {
     features.push({
-      label: lang === "ar" ? "Sleeves" : "Sleeves",
+      label: lang === "ar" ? "الأكمام" : "Sleeves",
       value: sleeveStyleLabels[attributes.sleeveStyle]?.[lang] ?? attributes.sleeveStyle,
     });
   }
@@ -64,28 +64,28 @@ export function KeyFeatures({ attributes, locale }: KeyFeaturesProps) {
   // Optional fields - only show if has value
   if (attributes.length) {
     features.push({
-      label: lang === "ar" ? "Length" : "Length",
+      label: lang === "ar" ? "الطول" : "Length",
       value: garmentLengthLabels[attributes.length]?.[lang] ?? attributes.length,
     });
   }
 
   if (attributes.embellishment && attributes.embellishment !== "NONE") {
     features.push({
-      label: lang === "ar" ? "Embellishment" : "Embellishment",
+      label: lang === "ar" ? "التطريز" : "Embellishment",
       value: embellishmentLabels[attributes.embellishment]?.[lang] ?? attributes.embellishment,
     });
   }
 
   if (attributes.transparencyLayer) {
     features.push({
-      label: lang === "ar" ? "Transparency" : "Transparency",
+      label: lang === "ar" ? "الشفافية" : "Transparency",
       value: transparencyLayerLabels[attributes.transparencyLayer]?.[lang] ?? attributes.transparencyLayer,
     });
   }
 
   if (attributes.neckline) {
     features.push({
-      label: lang === "ar" ? "Neckline" : "Neckline",
+      label: lang === "ar" ? "فتحة الرقبة" : "Neckline",
       value: necklineLabels[attributes.neckline]?.[lang] ?? attributes.neckline,
     });
   }
@@ -95,7 +95,7 @@ export function KeyFeatures({ attributes, locale }: KeyFeaturesProps) {
   return (
     <div className="py-6">
       <h3 className="text-sm font-semibold text-stone-900 mb-4">
-        {lang === "ar" ? "Key Features" : "Key Features"}
+        {lang === "ar" ? "المميزات الرئيسية" : "Key Features"}
       </h3>
       <ul className="space-y-2">
         {features.map((feature, index) => (

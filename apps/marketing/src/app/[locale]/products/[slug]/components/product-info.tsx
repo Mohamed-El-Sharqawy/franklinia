@@ -11,7 +11,13 @@ import { Accordion, AccordionItem, Checkbox, SocialShare } from "@/components/ui
 import { KeyFeatures } from "@/components/fashion-attributes/KeyFeatures";
 import { OccasionBadgeList } from "@/components/occasion/OccasionBadgeList";
 import { LayeringNotice } from "@/components/fashion-attributes/LayeringNotice";
-import { fitAdjustmentLabels } from "@ecommerce/shared-utils";
+import { 
+  fitAdjustmentLabels,
+  fabricLabels,
+  embellishmentLabels,
+  sleeveStyleLabels,
+  fitTypeLabels
+} from "@ecommerce/shared-utils";
 import { useState } from "react";
 
 interface CartItemInfo {
@@ -55,39 +61,44 @@ export function ProductInfo({
   name,
   price,
   compareAtPrice,
-  discountPercent,
-  reviewCount,
   locale,
   selectedOptions,
   selectedVariant,
   onOptionSelect,
   isOptionValueDisabled,
-  hasSizeGuide,
-  onOpenSizeGuide,
-  quantity,
-  onIncrement,
-  onDecrement,
   onAddToCart,
-  onBuyNow,
-  isFavourite,
   isInWishlist,
-  onToggleFavourite,
   onToggleWishlist,
-  cartItem,
-  onUpdateCartQuantity,
 }: ProductInfoProps) {
   const t = useTranslations("product");
   const isArabic = locale === "ar";
+  const lang = locale === "ar" ? "ar" : "en";
   const [addGiftMessage, setAddGiftMessage] = useState(false);
 
-  const composition = [
-    (product as any).fashionAttributes?.fabric,
-    (product as any).fashionAttributes?.embellishment && (product as any).fashionAttributes?.embellishment !== 'NONE' 
-      ? (product as any).fashionAttributes?.embellishment 
-      : null,
-    (product as any).fashionAttributes?.sleeveStyle,
-    (product as any).fashionAttributes?.fitType,
-  ].filter(Boolean).join(', ');
+  const compositionParts: string[] = [];
+  const attrs = (product as any).fashionAttributes;
+  
+  if (attrs?.fabric) {
+    const label = fabricLabels[attrs.fabric as keyof typeof fabricLabels];
+    compositionParts.push(label?.[lang] || attrs.fabric);
+  }
+  
+  if (attrs?.embellishment && attrs.embellishment !== 'NONE') {
+    const label = embellishmentLabels[attrs.embellishment as keyof typeof embellishmentLabels];
+    compositionParts.push(label?.[lang] || attrs.embellishment);
+  }
+  
+  if (attrs?.sleeveStyle) {
+    const label = sleeveStyleLabels[attrs.sleeveStyle as keyof typeof sleeveStyleLabels];
+    compositionParts.push(label?.[lang] || attrs.sleeveStyle);
+  }
+  
+  if (attrs?.fitType) {
+    const label = fitTypeLabels[attrs.fitType as keyof typeof fitTypeLabels];
+    compositionParts.push(label?.[lang] || attrs.fitType);
+  }
+  
+  const composition = compositionParts.join(', ');
 
   const benefits = [
     { icon: <Truck className="h-4 w-4" />, text: isArabic ? "شحن مجاني خلال 1-2 أيام في الإمارات" : "Complimentary 1-2 days shipping in UAE" },
