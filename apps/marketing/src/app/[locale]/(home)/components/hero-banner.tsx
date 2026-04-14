@@ -107,7 +107,7 @@ export function HeroBanner({ banners, locale }: HeroBannerProps) {
 
   return (
     <section
-      className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden bg-black touch-pan-y select-none cursor-grab active:cursor-grabbing"
+      className="relative w-full h-[60vh] md:h-[calc(100vh-113px)] overflow-hidden bg-black touch-pan-y select-none cursor-grab active:cursor-grabbing"
       onTouchStart={(e) => handleStart(e.targetTouches[0].clientX)}
       onTouchMove={(e) => handleMove(e.targetTouches[0].clientX)}
       onTouchEnd={handleEnd}
@@ -126,7 +126,8 @@ export function HeroBanner({ banners, locale }: HeroBannerProps) {
           <Image
             src={banner.imageUrl}
             alt={isArabic ? banner.titleAr : banner.titleEn}
-            fill
+            width={2560}
+            height={1440}
             loading="eager"
             priority={index === 0}
             className="object-cover"

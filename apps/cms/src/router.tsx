@@ -5,9 +5,6 @@ import { DashboardPage } from "./pages/dashboard";
 import { ProductsPage, NewProductPage, EditProductPage, ViewProductPage } from "./pages/products";
 import { CollectionsPage } from "./pages/collections";
 import { CollectionDetailsPage } from "./pages/collection-details";
-import { MaterialsPage } from "./pages/materials";
-import { StonesPage } from "./pages/stones";
-import { ClaritiesPage } from "./pages/clarities";
 import { OrdersPage } from "./pages/orders";
 import { UsersPage } from "./pages/users";
 import { UserDetailsPage } from "./pages/user-details";
@@ -60,18 +57,6 @@ export const router = createBrowserRouter([
       {
         path: "collections/:id",
         element: <CollectionDetailsPage />,
-      },
-      {
-        path: "materials",
-        element: <MaterialsPage />,
-      },
-      {
-        path: "stones",
-        element: <StonesPage />,
-      },
-      {
-        path: "clarities",
-        element: <ClaritiesPage />,
       },
       {
         path: "orders",
