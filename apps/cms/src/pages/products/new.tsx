@@ -1,17 +1,20 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, X } from "lucide-react";
 import { useAllCollections } from "@/features/collections";
-import { useMaterials } from "@/features/materials";
-import { useStones } from "@/features/stones";
-import { useClarities } from "@/features/clarities";
 import {
   useCreateProduct,
   useUploadProductImages,
-  useLinkImageToVariants,
+  useLinkImageToVariant,
 } from "@/features/products";
-import type { CreateVariantBody } from "@/features/products";
-import { Gender, ProductBadge } from "@ecommerce/shared-types";
+import type { CreateProductBody } from "@/features/products";
+import { ProductOptionsManager, type ProductOptionForm } from "@/features/products/components/ProductOptionsManager";
+import { VariantMatrix, type VariantForm } from "@/features/products/components/VariantMatrix";
+import { CustomFieldsManager, type CustomFieldForm } from "@/features/products/components/CustomFieldsManager";
+import { BaseCategorySelect } from "@/features/products/components/BaseCategorySelect";
+import { FashionAttributesForm, type FashionAttributesInput } from "@/features/products/components/FashionAttributesForm";
+import { OccasionSelector } from "@/features/products/components/OccasionSelector";
+import { ProductBadge, BaseCategory } from "@ecommerce/shared-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,17 +32,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-interface VariantForm {
-  tempId: string; // Temporary ID for tracking before creation
-  nameEn: string;
-  nameAr: string;
-  sku: string;
-  price: string;
-  compareAtPrice: string;
-  stock: string;
-  isActive: boolean;
-}
-
 // Staged image with file and linked variant tempIds
 interface StagedImage {
   id: string;
@@ -48,33 +40,17 @@ interface StagedImage {
   linkedVariantTempIds: string[];
 }
 
-const createEmptyVariant = (): VariantForm => ({
-  tempId: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-  nameEn: "",
-  nameAr: "",
-  sku: "",
-  price: "",
-  compareAtPrice: "",
-  stock: "0",
-  isActive: true,
-});
-
 export function NewProductPage() {
   const navigate = useNavigate();
   const createMutation = useCreateProduct();
   const uploadProductImagesMutation = useUploadProductImages();
-  const linkImageToVariantsMutation = useLinkImageToVariants();
+  const linkImageToVariantMutation = useLinkImageToVariant();
 
   const { data: collectionsRes } = useAllCollections();
-  const { data: materialsRes } = useMaterials();
-  const { data: stonesRes } = useStones();
-  const { data: claritiesRes } = useClarities();
 
   const collections = collectionsRes?.data ?? [];
-  const materials = materialsRes?.data ?? [];
-  const stones = stonesRes?.data ?? [];
-  const clarities = claritiesRes?.data ?? [];
 
+  // Basic Info state
   const [nameEn, setNameEn] = useState("");
   const [nameAr, setNameAr] = useState("");
   const [descriptionEn, setDescriptionEn] = useState("");
@@ -85,60 +61,48 @@ export function NewProductPage() {
   const [metaTitleAr, setMetaTitleAr] = useState("");
   const [metaDescriptionEn, setMetaDescriptionEn] = useState("");
   const [metaDescriptionAr, setMetaDescriptionAr] = useState("");
-  const [gender, setGender] = useState<Gender>(Gender.UNISEX);
   const [collectionId, setCollectionId] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
   const [badge, setBadge] = useState<ProductBadge | "">("");
-  const [materialId, setMaterialId] = useState("");
-  const [stoneId, setStoneId] = useState("");
-  const [clarityId, setClarityId] = useState("");
   const [position, setPosition] = useState(0);
-  const [variants, setVariants] = useState<VariantForm[]>([createEmptyVariant()]);
+  const [baseCategory, setBaseCategory] = useState<BaseCategory | "">("");
+  const [fashionAttributes, setFashionAttributes] = useState<FashionAttributesInput>({
+    fabric: "",
+    embellishment: "NONE",
+    sleeveStyle: "",
+    fitType: "",
+    transparencyLayer: "",
+    neckline: null,
+    length: null,
+  });
+  const [occasionIds, setOccasionIds] = useState<string[]>([]);
+  const [occasionPositions, setOccasionPositions] = useState<Record<string, number>>({});
 
-  // Staged images (before product creation)
+  // New Complex State
+  const [options, setOptions] = useState<ProductOptionForm[]>([]);
+  const [variants, setVariants] = useState<VariantForm[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldForm[]>([]);
+
+  // Staged images state
   const [stagedImages, setStagedImages] = useState<StagedImage[]>([]);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const productImageInputRef = useRef<HTMLInputElement>(null);
 
-  const addVariant = () => {
-    setVariants([...variants, createEmptyVariant()]);
-  };
-
-  const removeVariant = (index: number) => {
-    if (variants.length === 1) return;
-    const removedTempId = variants[index].tempId;
-    setVariants(variants.filter((_, i) => i !== index));
-    // Remove this variant from all staged images
-    setStagedImages((prev) =>
-      prev.map((img) => ({
-        ...img,
-        linkedVariantTempIds: img.linkedVariantTempIds.filter((id) => id !== removedTempId),
-      }))
-    );
-  };
-
-  const updateVariant = (index: number, field: keyof VariantForm, value: string | boolean) => {
-    const updated = [...variants];
-    updated[index] = { ...updated[index], [field]: value };
-    setVariants(updated);
-  };
-
-  // Add staged images
+  // Image Handlers
   const handleAddStagedImages = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const newImages: StagedImage[] = Array.from(files).map((file) => ({
       id: `staged-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       file,
       previewUrl: URL.createObjectURL(file),
-      linkedVariantTempIds: [], // Not linked to any variant yet
+      linkedVariantTempIds: [],
     }));
     setStagedImages((prev) => [...prev, ...newImages]);
   };
 
-  // Remove staged image
   const removeStagedImage = (imageId: string) => {
     setStagedImages((prev) => {
       const img = prev.find((i) => i.id === imageId);
@@ -147,61 +111,34 @@ export function NewProductPage() {
     });
   };
 
-  // Toggle variant link for a staged image
-  const toggleImageVariantLink = (imageId: string, variantTempId: string) => {
+  const toggleImageVariantLink = (imageId: string, variantIndex: number) => {
+    const variantKey = `idx-${variantIndex}`;
     setStagedImages((prev) =>
       prev.map((img) => {
         if (img.id !== imageId) return img;
-        const isLinked = img.linkedVariantTempIds.includes(variantTempId);
+        const isLinked = img.linkedVariantTempIds.includes(variantKey);
         return {
           ...img,
           linkedVariantTempIds: isLinked
-            ? img.linkedVariantTempIds.filter((id) => id !== variantTempId)
-            : [...img.linkedVariantTempIds, variantTempId],
+            ? img.linkedVariantTempIds.filter((id) => id !== variantKey)
+            : [...img.linkedVariantTempIds, variantKey],
         };
       })
     );
   };
 
-  // Get images linked to a specific variant
-  const getVariantStagedImages = (variantTempId: string) => {
-    return stagedImages.filter((img) => img.linkedVariantTempIds.includes(variantTempId));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!nameEn || !nameAr) {
-      toast.error("Product name is required in both languages");
+      toast.error("Name is required in both languages");
       return;
     }
-
-    const validVariants = variants.filter((v) => v.nameEn && v.price);
-    if (validVariants.length === 0) {
-      toast.error("At least one variant with name and price is required");
-      return;
-    }
-
-    const variantsData: CreateVariantBody[] = validVariants.map((v) => ({
-      nameEn: v.nameEn,
-      nameAr: v.nameAr,
-      sku: v.sku || undefined,
-      price: parseFloat(v.price) || 0,
-      compareAtPrice: v.compareAtPrice ? parseFloat(v.compareAtPrice) : undefined,
-      stock: parseInt(v.stock) || 0,
-      isActive: v.isActive,
-    }));
 
     setIsSubmitting(true);
-    
-    // Show persistent loading toast
-    const loadingToastId = toast.loading("Creating product...", {
-      description: "Please wait, do not leave this page",
-    });
+    const loadingToastId = toast.loading("Creating product...");
 
     try {
-      // Step 1: Create product with variants
-      const result = await createMutation.mutateAsync({
+      const productBody: CreateProductBody = {
         nameEn,
         nameAr,
         descriptionEn,
@@ -212,280 +149,194 @@ export function NewProductPage() {
         metaTitleAr: metaTitleAr || undefined,
         metaDescriptionEn: metaDescriptionEn || undefined,
         metaDescriptionAr: metaDescriptionAr || undefined,
-        gender,
+        baseCategory: baseCategory || undefined,
         collectionId: collectionId || undefined,
         isActive,
         isFeatured,
         isTrending,
         badge: badge || undefined,
         position,
-        materialId: materialId || undefined,
-        stoneId: stoneId || undefined,
-        clarityId: clarityId || undefined,
-        variants: variantsData,
-      });
+        fashionAttributes: fashionAttributes.fabric ? {
+          fabric: fashionAttributes.fabric,
+          embellishment: fashionAttributes.embellishment || "NONE",
+          sleeveStyle: fashionAttributes.sleeveStyle,
+          fitType: fashionAttributes.fitType,
+          transparencyLayer: fashionAttributes.transparencyLayer,
+          neckline: fashionAttributes.neckline || undefined,
+          length: fashionAttributes.length || undefined,
+        } : undefined,
+        occasionIds: occasionIds.length > 0 ? occasionIds : undefined,
+        occasionPositions: Object.keys(occasionPositions).length > 0 ? occasionPositions : undefined,
+        options: options.map(opt => ({
+          nameEn: opt.nameEn,
+          nameAr: opt.nameAr,
+          position: opt.position,
+          values: opt.values.map(v => ({
+            valueEn: v.valueEn,
+            valueAr: v.valueAr,
+            hex: v.hex,
+            position: v.position
+          }))
+        })),
+        customFields: customFields.map(cf => ({
+          type: cf.type,
+          labelEn: cf.labelEn,
+          labelAr: cf.labelAr,
+          placeholderEn: cf.placeholderEn || undefined,
+          placeholderAr: cf.placeholderAr || undefined,
+          isRequired: cf.isRequired
+        })),
+        variants: variants.map(v => ({
+          nameEn: v.nameEn,
+          nameAr: v.nameAr,
+          sku: v.sku || undefined,
+          price: parseFloat(v.price) || 0,
+          compareAtPrice: v.compareAtPrice ? parseFloat(v.compareAtPrice) : undefined,
+          stock: parseInt(v.stock) || 0,
+          isActive: v.isActive
+        }))
+      };
 
+      const result = await createMutation.mutateAsync(productBody);
       const createdProduct = result.data;
       if (!createdProduct) throw new Error("Product creation failed");
 
-      toast.dismiss(loadingToastId);
-      toast.success("Product created!");
-
-      // Step 2: Upload images and link to variants
+      // Step 2: Upload images and link back
       if (stagedImages.length > 0) {
-        toast.loading("Uploading images...", {
-          id: loadingToastId,
-          description: `Uploading ${stagedImages.length} image(s), please wait`,
-        });
-
-        // Build mapping from tempId to real variant ID
-        const tempIdToRealId: Record<string, string> = {};
-        validVariants.forEach((v, index) => {
-          const realVariant = createdProduct.variants[index];
-          if (realVariant) {
-            tempIdToRealId[v.tempId] = realVariant.id;
-          }
-        });
-
-        // Upload each image and link to its variants
+        toast.loading("Uploading images...", { id: loadingToastId });
+        
         for (const stagedImg of stagedImages) {
           try {
-            // Upload image to product
             const uploadResult = await uploadProductImagesMutation.mutateAsync({
               productId: createdProduct.id,
-              files: [stagedImg.file],
+              files: [stagedImg.file]
             });
-
             const uploadedImage = uploadResult.data?.[0];
-            if (!uploadedImage) continue;
-
-            // Link to variants
-            const realVariantIds = stagedImg.linkedVariantTempIds
-              .map((tempId) => tempIdToRealId[tempId])
-              .filter(Boolean);
-
-            if (realVariantIds.length > 0) {
-              await linkImageToVariantsMutation.mutateAsync({
-                imageId: uploadedImage.id,
-                variantIds: realVariantIds,
-              });
+            
+            if (uploadedImage && stagedImg.linkedVariantTempIds.length > 0) {
+              const linkedVariantIndices = stagedImg.linkedVariantTempIds
+                .map(key => parseInt(key.replace("idx-", "")));
+              
+              for (const idx of linkedVariantIndices) {
+                const realVariant = createdProduct.variants[idx];
+                if (realVariant) {
+                  await linkImageToVariantMutation.mutateAsync({
+                    imageId: uploadedImage.id,
+                    variantId: realVariant.id
+                  });
+                }
+              }
             }
-          } catch (imgErr) {
-            console.error("Failed to upload/link image:", imgErr);
+          } catch (err) {
+            console.error("Image upload failed", err);
           }
         }
-
-        toast.dismiss(loadingToastId);
-        toast.success("Images uploaded and linked!");
       }
 
+      toast.success("Product created successfully", { id: loadingToastId });
       navigate(`/products/${createdProduct.slug}`);
     } catch (err) {
-      toast.dismiss(loadingToastId);
-      toast.error(err instanceof Error ? err.message : "Failed to create product");
+      toast.error(err instanceof Error ? err.message : "Failed to create product", { id: loadingToastId });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-4xl">
-      <div className="flex items-center gap-4 mb-6">
+    <div className="max-w-7xl mx-auto pb-20">
+      <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" size="icon" asChild>
           <Link to="/products">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">New Product</h1>
-          <p className="text-muted-foreground">Add a new product to your catalog</p>
+          <p className="text-muted-foreground text-lg">Create a new relational product with variants and tailoring options</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Tabs defaultValue="basic" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="basic">Basic Info</TabsTrigger>
-            <TabsTrigger value="images">Images ({stagedImages.length})</TabsTrigger>
-            <TabsTrigger value="variants">Variants ({variants.length})</TabsTrigger>
+        <Tabs defaultValue="basic" className="space-y-8">
+          <TabsList className="grid grid-cols-5 w-full bg-muted/50 p-1">
+            <TabsTrigger value="basic">General</TabsTrigger>
+            <TabsTrigger value="media">Media ({stagedImages.length})</TabsTrigger>
+            <TabsTrigger value="variants">Options & Variants</TabsTrigger>
+            <TabsTrigger value="custom">Customization</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-6">
-            <Card>
+          <TabsContent value="basic" className="space-y-6 animate-in fade-in-50 duration-300">
+            <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Product Details</CardTitle>
+                <CardTitle className="text-xl">Basic Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="nameEn">Name (English) *</Label>
-                    <Input
-                      id="nameEn"
-                      value={nameEn}
-                      onChange={(e) => setNameEn(e.target.value)}
-                      required
-                    />
+                    <Input id="nameEn" value={nameEn} onChange={(e) => setNameEn(e.target.value)} required placeholder="e.g. Classic Black Abaya" className="h-11" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="nameAr">Name (Arabic) *</Label>
-                    <Input
-                      id="nameAr"
-                      value={nameAr}
-                      onChange={(e) => setNameAr(e.target.value)}
-                      dir="rtl"
-                      required
-                    />
+                    <Input id="nameAr" value={nameAr} onChange={(e) => setNameAr(e.target.value)} dir="rtl" required placeholder="عباية سوداء كلاسيكية" className="h-11" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="descriptionEn">Description (English)</Label>
-                    <Textarea
-                      id="descriptionEn"
-                      value={descriptionEn}
-                      onChange={(e) => setDescriptionEn(e.target.value)}
-                      rows={4}
-                    />
+                    <Textarea id="descriptionEn" value={descriptionEn} onChange={(e) => setDescriptionEn(e.target.value)} rows={5} placeholder="Full product description..." />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="descriptionAr">Description (Arabic)</Label>
-                    <Textarea
-                      id="descriptionAr"
-                      value={descriptionAr}
-                      onChange={(e) => setDescriptionAr(e.target.value)}
-                      dir="rtl"
-                      rows={4}
-                    />
+                    <Textarea id="descriptionAr" value={descriptionAr} onChange={(e) => setDescriptionAr(e.target.value)} dir="rtl" rows={5} placeholder="وصف كامل للمنتج..." />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="shortDescriptionEn">Short Description (English)</Label>
-                    <Textarea
-                      id="shortDescriptionEn"
-                      value={shortDescriptionEn}
-                      onChange={(e) => setShortDescriptionEn(e.target.value)}
-                      rows={2}
-                    />
+                    <Textarea id="shortDescriptionEn" value={shortDescriptionEn} onChange={(e) => setShortDescriptionEn(e.target.value)} rows={2} placeholder="Brief summary..." />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="shortDescriptionAr">Short Description (Arabic)</Label>
-                    <Textarea
-                      id="shortDescriptionAr"
-                      value={shortDescriptionAr}
-                      onChange={(e) => setShortDescriptionAr(e.target.value)}
-                      dir="rtl"
-                      rows={2}
-                    />
+                    <Textarea id="shortDescriptionAr" value={shortDescriptionAr} onChange={(e) => setShortDescriptionAr(e.target.value)} dir="rtl" rows={2} placeholder="ملخص بسيط..." />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Organization</CardTitle>
+                <CardTitle className="text-xl">Organization & Attributes</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label>Collection</Label>
-                    <Select
-                      value={collectionId || "none"}
-                      onValueChange={(v) => setCollectionId(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
+                    <Select value={collectionId || "none"} onValueChange={(v) => setCollectionId(v === "none" ? "" : v)}>
+                      <SelectTrigger className="h-11">
                         <SelectValue placeholder="Select collection" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">No Collection</SelectItem>
-                        {collections
-                          .filter((c: any) => !c.parentId)
-                          .map((parent: any) => {
-                            const children = collections.filter((c: any) => c.parentId === parent.id);
-                            return (
-                              <div key={parent.id}>
-                                <SelectItem value={parent.id} className="font-medium">
-                                  {parent.nameEn}
-                                </SelectItem>
-                                {children.map((child: any) => (
-                                  <SelectItem key={child.id} value={child.id} className="pl-6 text-muted-foreground">
-                                    └ {child.nameEn}
-                                  </SelectItem>
-                                ))}
-                              </div>
-                            );
-                          })}
+                        {collections.filter((c: any) => !c.parentId).map((parent: any) => (
+                          <div key={parent.id}>
+                            <SelectItem value={parent.id} className="font-semibold">{parent.nameEn}</SelectItem>
+                            {collections.filter((c: any) => c.parentId === parent.id).map((child: any) => (
+                              <SelectItem key={child.id} value={child.id} className="pl-6 text-muted-foreground">&gt; {child.nameEn}</SelectItem>
+                            ))}
+                          </div>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Gender</Label>
-                    <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={Gender.MEN}>Men</SelectItem>
-                        <SelectItem value={Gender.WOMEN}>Women</SelectItem>
-                        <SelectItem value={Gender.UNISEX}>Unisex</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-8">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="isActive"
-                      checked={isActive}
-                      onCheckedChange={setIsActive}
-                    />
-                    <Label htmlFor="isActive">Active</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="isFeatured"
-                      checked={isFeatured}
-                      onCheckedChange={setIsFeatured}
-                    />
-                    <Label htmlFor="isFeatured">Featured</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="isTrending"
-                      checked={isTrending}
-                      onCheckedChange={setIsTrending}
-                    />
-                    <Label htmlFor="isTrending">Trending</Label>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="position">Display Position</Label>
-                    <Input
-                      id="position"
-                      type="number"
-                      min="0"
-                      value={position}
-                      onChange={(e) => setPosition(parseInt(e.target.value) || 0)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Badge</Label>
-                    <Select
-                      value={badge || "none"}
-                      onValueChange={(v) => setBadge(v === "none" ? "" : v as ProductBadge)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select badge" />
+                    <Select value={badge || "none"} onValueChange={(v) => setBadge(v === "none" ? "" : v as ProductBadge)}>
+                      <SelectTrigger className="h-11">
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">No Badge</SelectItem>
@@ -496,357 +347,134 @@ export function NewProductPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Material</Label>
-                    <Select
-                      value={materialId || "none"}
-                      onValueChange={(v) => setMaterialId(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select material" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Material</SelectItem>
-                        {materials.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="position">Position</Label>
+                    <Input id="position" type="number" value={position} onChange={(e) => setPosition(parseInt(e.target.value) || 0)} className="h-11" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Stone</Label>
-                    <Select
-                      value={stoneId || "none"}
-                      onValueChange={(v) => setStoneId(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select stone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Stone</SelectItem>
-                        {stones.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Clarity</Label>
-                    <Select
-                      value={clarityId || "none"}
-                      onValueChange={(v) => setClarityId(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select clarity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Clarity</SelectItem>
-                        {clarities.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Fashion Domain Fields */}
+                <div className="border-t pt-6 space-y-6">
+                  <h4 className="text-sm font-medium text-muted-foreground">Fashion Attributes</h4>
+                  <BaseCategorySelect
+                    value={baseCategory}
+                    onChange={(v) => setBaseCategory(v as BaseCategory)}
+                  />
+                  <FashionAttributesForm
+                    value={fashionAttributes}
+                    onChange={setFashionAttributes}
+                  />
+                  <OccasionSelector
+                    selectedIds={occasionIds}
+                    onChange={(ids, positions) => {
+                      setOccasionIds(ids);
+                      setOccasionPositions(positions);
+                    }}
+                  />
+                </div>
+
+                <div className="flex gap-8 p-4 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2"><Switch checked={isActive} onCheckedChange={setIsActive} /><Label>Active</Label></div>
+                  <div className="flex items-center gap-2"><Switch checked={isFeatured} onCheckedChange={setIsFeatured} /><Label>Featured</Label></div>
+                  <div className="flex items-center gap-2"><Switch checked={isTrending} onCheckedChange={setIsTrending} /><Label>Trending</Label></div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="images" className="space-y-4">
-            <Card>
+          <TabsContent value="media" className="space-y-6 animate-in fade-in-50 duration-300">
+            <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Product Images</span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    Upload images and link to variants before creating
-                  </span>
-                </CardTitle>
+                <CardTitle>Staged Product Media</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Upload new images */}
-                <div className="space-y-2">
-                  <Label>Upload Images</Label>
-                  <div className="flex gap-2 flex-wrap">
-                    {stagedImages.map((img) => (
-                      <div key={img.id} className="relative group">
-                        <img
-                          src={img.previewUrl}
-                          alt="Staged"
-                          className="h-24 w-24 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => setPreviewImageUrl(img.previewUrl)}
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => removeStagedImage(img.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                        <div className="absolute bottom-1 left-1 right-1 text-center">
-                          <span className="text-xs bg-black/60 text-white px-1 rounded">
-                            {img.linkedVariantTempIds.length} variant(s)
-                          </span>
-                        </div>
+              <CardContent className="space-y-8">
+                <div className="flex gap-4 flex-wrap">
+                  {stagedImages.map((img) => (
+                    <div key={img.id} className="relative group w-32 h-32">
+                      <img src={img.previewUrl} alt="Staged" className="w-full h-full object-cover rounded-xl border-2 border-transparent group-hover:border-primary transition-all cursor-pointer" onClick={() => setPreviewImageUrl(img.previewUrl)} />
+                      <Button type="button" variant="destructive" size="icon" className="absolute -top-2 -right-2 h-7 w-7 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => removeStagedImage(img.id)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <div className="absolute -bottom-2 inset-x-0 flex justify-center">
+                        <span className="bg-primary text-[10px] text-white px-2 py-0.5 rounded-full shadow-sm">{img.linkedVariantTempIds.length} Linked</span>
                       </div>
-                    ))}
-                    <label className="flex flex-col items-center justify-center h-24 w-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground mt-1">Add Images</span>
-                      <input
-                        ref={productImageInputRef}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => handleAddStagedImages(e.target.files)}
-                      />
-                    </label>
-                  </div>
+                    </div>
+                  ))}
+                  <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-muted-foreground/30 rounded-xl cursor-pointer hover:bg-muted/50 hover:border-primary transition-all">
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <span className="text-[10px] font-medium mt-2 text-muted-foreground uppercase tracking-wider">Add Media</span>
+                    <input ref={productImageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleAddStagedImages(e.target.files)} />
+                  </label>
                 </div>
 
-                {/* Link images to variants */}
-                {stagedImages.length > 0 && (
+                {stagedImages.length > 0 && variants.length > 0 && (
                   <div className="space-y-4">
-                    <Label>Link Images to Variants</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <Label className="text-lg">Link Media to Variants</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                       {stagedImages.map((img) => (
-                        <div key={img.id} className="border rounded-lg p-3 space-y-3">
-                          <img
-                            src={img.previewUrl}
-                            alt="Staged"
-                            className="w-full aspect-square object-cover rounded-lg"
-                          />
+                        <div key={img.id} className="bg-muted/20 p-4 rounded-xl space-y-4">
+                          <img src={img.previewUrl} className="w-full aspect-square object-cover rounded-lg shadow-sm" />
                           <div className="space-y-2">
-                            <p className="text-xs font-medium text-muted-foreground">
-                              Link to variants:
-                            </p>
-                            <div className="flex flex-wrap gap-1">
-                              {variants.filter(v => v.nameEn).map((variant) => {
-                                const isLinked = img.linkedVariantTempIds.includes(variant.tempId);
-                                const label = variant.nameEn || `Variant`;
+                             <div className="flex flex-wrap gap-1.5">
+                              {variants.map((v, vIdx) => {
+                                const vKey = `idx-${vIdx}`;
+                                const isLinked = img.linkedVariantTempIds.includes(vKey);
                                 return (
-                                  <button
-                                    key={variant.tempId}
-                                    type="button"
-                                    onClick={() => toggleImageVariantLink(img.id, variant.tempId)}
-                                    className={`text-xs px-2 py-1 rounded-full border transition ${
-                                      isLinked
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : "bg-muted/50 border-border hover:border-primary"
-                                    }`}
-                                  >
-                                    {label}
+                                  <button key={vKey} type="button" onClick={() => toggleImageVariantLink(img.id, vIdx)} className={`text-[10px] px-2.5 py-1 rounded-full border transition-all ${isLinked ? "bg-primary text-white border-primary" : "bg-card text-muted-foreground border-border hover:border-primary"}`}>
+                                    {v.nameEn || `Variant ${vIdx + 1}`}
                                   </button>
                                 );
                               })}
-                            </div>
-                            {variants.filter(v => v.nameEn).length === 0 && (
-                              <p className="text-xs text-muted-foreground">
-                                Add variants first to link images
-                              </p>
-                            )}
+                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-
-                {stagedImages.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No images added yet. Upload images above to get started.
-                  </p>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="variants" className="space-y-4">
-            {variants.map((variant, index) => (
-              <Card key={variant.tempId}>
-                <CardHeader className="flex flex-row items-center justify-between py-3">
-                  <CardTitle className="text-base">
-                    Variant {index + 1}
-                    {getVariantStagedImages(variant.tempId).length > 0 && (
-                      <span className="ml-2 text-xs font-normal text-muted-foreground">
-                        ({getVariantStagedImages(variant.tempId).length} images)
-                      </span>
-                    )}
-                  </CardTitle>
-                  {variants.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeVariant(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Name (English) *</Label>
-                      <Input
-                        value={variant.nameEn}
-                        onChange={(e) => updateVariant(index, "nameEn", e.target.value)}
-                        placeholder="e.g. Red / Large"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Name (Arabic) *</Label>
-                      <Input
-                        value={variant.nameAr}
-                        onChange={(e) => updateVariant(index, "nameAr", e.target.value)}
-                        dir="rtl"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>SKU</Label>
-                      <Input
-                        value={variant.sku}
-                        onChange={(e) => updateVariant(index, "sku", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Price *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={variant.price}
-                        onChange={(e) => updateVariant(index, "price", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Compare at Price</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={variant.compareAtPrice}
-                        onChange={(e) => updateVariant(index, "compareAtPrice", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Stock</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={variant.stock}
-                        onChange={(e) => updateVariant(index, "stock", e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-end pb-2">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={variant.isActive}
-                          onCheckedChange={(v) => updateVariant(index, "isActive", v)}
-                        />
-                        <Label>Active</Label>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            <Button type="button" variant="outline" onClick={addVariant} className="w-full">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Variant
-            </Button>
+          <TabsContent value="variants" className="space-y-8 animate-in fade-in-50 duration-300">
+            <ProductOptionsManager options={options} onChange={setOptions} />
+            <VariantMatrix variants={variants} options={options} onChange={setVariants} onUploadRequest={() => toast.info("Upload in Media tab")} productImagesCount={0} />
           </TabsContent>
 
-          <TabsContent value="seo" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>SEO Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="metaTitleEn">Meta Title (English)</Label>
-                    <Input
-                      id="metaTitleEn"
-                      value={metaTitleEn}
-                      onChange={(e) => setMetaTitleEn(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="metaTitleAr">Meta Title (Arabic)</Label>
-                    <Input
-                      id="metaTitleAr"
-                      value={metaTitleAr}
-                      onChange={(e) => setMetaTitleAr(e.target.value)}
-                      dir="rtl"
-                    />
-                  </div>
-                </div>
+          <TabsContent value="custom" className="space-y-6 animate-in fade-in-50 duration-300">
+            <CustomFieldsManager fields={customFields} onChange={setCustomFields} />
+          </TabsContent>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="metaDescriptionEn">Meta Description (English)</Label>
-                    <Textarea
-                      id="metaDescriptionEn"
-                      value={metaDescriptionEn}
-                      onChange={(e) => setMetaDescriptionEn(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="metaDescriptionAr">Meta Description (Arabic)</Label>
-                    <Textarea
-                      id="metaDescriptionAr"
-                      value={metaDescriptionAr}
-                      onChange={(e) => setMetaDescriptionAr(e.target.value)}
-                      dir="rtl"
-                      rows={3}
-                    />
-                  </div>
+          <TabsContent value="seo" className="space-y-6 animate-in fade-in-50 duration-300">
+            <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+              <CardHeader><CardTitle>Search Engine Optimization</CardTitle></CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2"><Label>Meta Title (English)</Label><Input value={metaTitleEn} onChange={(e) => setMetaTitleEn(e.target.value)} className="h-11" /></div>
+                  <div className="space-y-2"><Label>Meta Title (Arabic)</Label><Input value={metaTitleAr} onChange={(e) => setMetaTitleAr(e.target.value)} dir="rtl" className="h-11" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2"><Label>Meta Description (English)</Label><Textarea value={metaDescriptionEn} onChange={(e) => setMetaDescriptionEn(e.target.value)} rows={3} /></div>
+                  <div className="space-y-2"><Label>Meta Description (Arabic)</Label><Textarea value={metaDescriptionAr} onChange={(e) => setMetaDescriptionAr(e.target.value)} dir="rtl" rows={3} /></div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-4 mt-6">
-          <Button type="button" variant="outline" asChild>
+        <div className="flex justify-end gap-4 mt-12 bg-card/80 backdrop-blur-md p-4 rounded-2xl shadow-xl border sticky bottom-4 z-50">
+          <Button type="button" variant="outline" size="lg" asChild className="px-8 rounded-xl h-12">
             <Link to="/products">Cancel</Link>
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? "Creating..." : "Create Product"}
+          <Button type="submit" size="lg" disabled={isSubmitting} className="px-10 rounded-xl h-12 font-semibold shadow-lg shadow-primary/20">
+            {isSubmitting && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            {isSubmitting ? "Generating Product..." : "Create Product"}
           </Button>
         </div>
       </form>
 
-      {/* Image preview dialog */}
       <Dialog open={!!previewImageUrl} onOpenChange={() => setPreviewImageUrl(null)}>
-        <DialogContent className="max-w-3xl p-2">
-          {previewImageUrl && (
-            <img
-              src={previewImageUrl}
-              alt="Preview"
-              className="w-full h-auto rounded-lg"
-            />
-          )}
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none">
+          {previewImageUrl && <img src={previewImageUrl} alt="Preview" className="w-full h-auto object-contain rounded-2xl shadow-2xl" />}
         </DialogContent>
       </Dialog>
     </div>

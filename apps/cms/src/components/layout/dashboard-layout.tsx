@@ -11,8 +11,6 @@ import {
   Image,
   MessageSquare,
   BarChart3,
-  Gem,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,14 +19,13 @@ const navItems = [
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "Products", href: "/products", icon: Package },
   { label: "Collections", href: "/collections", icon: FolderTree },
-  { label: "Materials", href: "/materials", icon: Gem },
-  { label: "Stones", href: "/stones", icon: Sparkles },
-  { label: "Clarities", href: "/clarities", icon: Sparkles },
   { label: "Orders", href: "/orders", icon: ShoppingCart },
   { label: "Reviews", href: "/reviews", icon: MessageSquare },
   { label: "Coupons", href: "/coupons", icon: Ticket },
   { label: "Content", href: "/content", icon: Video },
   { label: "Banners", href: "/banners", icon: Image },
+  { label: "Pages", href: "/static-pages", icon: FolderTree },
+  { label: "Inquiries", href: "/inquiries", icon: MessageSquare },
   { label: "Users", href: "/users", icon: Users },
 ];
 
@@ -47,7 +44,7 @@ export function DashboardLayout() {
       <aside className="flex w-64 flex-col border-r bg-sidebar-background">
         <div className="flex h-16 items-center border-b px-6">
           <Link to="/" className="text-lg font-bold tracking-tight">
-            capella Dashboard
+            Franklinia Dashboard
           </Link>
         </div>
 

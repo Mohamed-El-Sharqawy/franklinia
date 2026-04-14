@@ -2,6 +2,16 @@ import { api } from "@/lib/api";
 import type { Product, ProductVariant } from "@ecommerce/shared-types";
 import type { ApiResponse } from "@ecommerce/shared-types";
 
+export interface FashionAttributesInput {
+  fabric: string;
+  embellishment?: string;
+  sleeveStyle: string;
+  fitType: string;
+  transparencyLayer: string;
+  neckline?: string | null;
+  length?: string | null;
+}
+
 export interface CreateProductBody {
   nameEn: string;
   nameAr: string;
@@ -13,16 +23,34 @@ export interface CreateProductBody {
   metaTitleAr?: string;
   metaDescriptionEn?: string;
   metaDescriptionAr?: string;
-  gender: "MEN" | "WOMEN" | "UNISEX";
+  baseCategory?: "ABAYA" | "MODEST_DRESS";
   collectionId?: string;
   isActive?: boolean;
   isFeatured?: boolean;
   isTrending?: boolean;
   badge?: "NEW" | "BESTSELLER" | "LIMITED_EDITION";
-  materialId?: string;
-  stoneId?: string;
-  clarityId?: string;
+  fashionAttributes?: FashionAttributesInput;
+  occasionIds?: string[];
+  occasionPositions?: Record<string, number>;
   position?: number;
+  options?: Array<{
+    nameEn: string;
+    nameAr: string;
+    position?: number;
+    values: Array<{
+      valueEn: string;
+      valueAr: string;
+      position?: number;
+    }>;
+  }>;
+  customFields?: Array<{
+    type: "TEXT" | "TEXTAREA" | "NUMBER" | "FILE";
+    labelEn: string;
+    labelAr: string;
+    placeholderEn?: string;
+    placeholderAr?: string;
+    isRequired?: boolean;
+  }>;
   variants?: CreateVariantBody[];
 }
 
@@ -30,6 +58,27 @@ export interface UpdateProductBody extends Partial<Omit<CreateProductBody, "vari
   defaultVariantId?: string | null;
   hoverVariantId?: string | null;
   position?: number;
+  options?: Array<{
+    id?: string;
+    nameEn: string;
+    nameAr: string;
+    position?: number;
+    values: Array<{
+      id?: string;
+      valueEn: string;
+      valueAr: string;
+      position?: number;
+    }>;
+  }>;
+  customFields?: Array<{
+    id?: string;
+    type: "TEXT" | "TEXTAREA" | "NUMBER" | "FILE";
+    labelEn: string;
+    labelAr: string;
+    placeholderEn?: string;
+    placeholderAr?: string;
+    isRequired?: boolean;
+  }>;
 }
 
 export interface CreateVariantBody {
@@ -44,6 +93,7 @@ export interface CreateVariantBody {
   metaTitleAr?: string;
   metaDescriptionEn?: string;
   metaDescriptionAr?: string;
+  optionValueIds?: string[];
 }
 
 export interface UpdateVariantBody {
@@ -58,6 +108,7 @@ export interface UpdateVariantBody {
   metaTitleAr?: string;
   metaDescriptionEn?: string;
   metaDescriptionAr?: string;
+  optionValueIds?: string[];
 }
 
 export function createProduct(body: CreateProductBody) {

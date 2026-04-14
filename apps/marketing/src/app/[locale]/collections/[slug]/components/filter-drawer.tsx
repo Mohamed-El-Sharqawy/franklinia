@@ -4,6 +4,10 @@ import { SlidersHorizontal, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { Collection } from "@ecommerce/shared-types";
 import type { AvailabilityFilter } from "../types";
+import { FabricFilter } from "@/components/fashion-attributes/FabricFilter";
+import { FitTypeFilter } from "@/components/fashion-attributes/FitTypeFilter";
+import { OccasionFilter } from "@/components/occasion/OccasionFilter";
+import type { Fabric, FitType, SleeveStyle } from "@ecommerce/shared-types";
 
 interface FilterDrawerProps {
   isOpen: boolean;
@@ -18,6 +22,22 @@ interface FilterDrawerProps {
   maxPrice: number;
   onMinPriceChange: (value: number) => void;
   onMaxPriceChange: (value: number) => void;
+  // Fashion filters
+  fabric?: string | null;
+  onFabricChange?: (value: string | null) => void;
+  occasion?: string | null;
+  onOccasionChange?: (value: string | null) => void;
+  fitType?: string | null;
+  onFitTypeChange?: (value: string | null) => void;
+  sleeveStyle?: string | null;
+  onSleeveStyleChange?: (value: string | null) => void;
+  // Available filter options
+  availableFilters?: {
+    fabrics: string[];
+    occasions: { slug: string; nameEn: string; nameAr: string }[];
+    fitTypes: string[];
+    sleeveStyles: string[];
+  };
 }
 
 export function FilterDrawer({
@@ -33,6 +53,17 @@ export function FilterDrawer({
   maxPrice,
   onMinPriceChange,
   onMaxPriceChange,
+  // Fashion filters
+  fabric,
+  onFabricChange,
+  occasion,
+  onOccasionChange,
+  fitType,
+  onFitTypeChange,
+  sleeveStyle,
+  onSleeveStyleChange,
+  // Available filter options
+  availableFilters,
 }: FilterDrawerProps) {
   const t = useTranslations("collection");
   const isArabic = locale === "ar";
@@ -168,6 +199,45 @@ export function FilterDrawer({
             </div>
           </div>
         </div>
+
+        {/* Fabric Filter */}
+        {availableFilters?.fabrics && availableFilters.fabrics.length > 0 && onFabricChange && (
+          <div className="p-4 border-b">
+            <h3 className="font-semibold text-sm mb-3">{isArabic ? "Premium" : "Fabric"}</h3>
+            <FabricFilter
+              fabrics={availableFilters.fabrics as Fabric[]}
+              selected={fabric as Fabric | null}
+              onChange={onFabricChange}
+              locale={locale}
+            />
+          </div>
+        )}
+
+        {/* Fit Type Filter */}
+        {availableFilters?.fitTypes && availableFilters.fitTypes.length > 0 && onFitTypeChange && (
+          <div className="p-4 border-b">
+            <h3 className="font-semibold text-sm mb-3">{isArabic ? "Fit" : "Fit Type"}</h3>
+            <FitTypeFilter
+              fitTypes={availableFilters.fitTypes as FitType[]}
+              selected={fitType as FitType | null}
+              onChange={onFitTypeChange}
+              locale={locale}
+            />
+          </div>
+        )}
+
+        {/* Occasion Filter */}
+        {availableFilters?.occasions && availableFilters.occasions.length > 0 && onOccasionChange && (
+          <div className="p-4 border-b">
+            <h3 className="font-semibold text-sm mb-3">{isArabic ? "Occasion" : "Occasion"}</h3>
+            <OccasionFilter
+              occasions={availableFilters.occasions}
+              selected={occasion ?? null}
+              onChange={onOccasionChange}
+              locale={locale}
+            />
+          </div>
+        )}
       </div>
     </>
   );

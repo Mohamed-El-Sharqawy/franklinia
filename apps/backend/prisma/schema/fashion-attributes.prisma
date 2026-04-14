@@ -1,0 +1,95 @@
+enum BaseCategory {
+  ABAYA
+  MODEST_DRESS
+}
+
+enum FitAdjustment {
+  LOOSE
+  RELAXED
+  STRUCTURED
+}
+
+enum Fabric {
+  CHIFFON
+  CREPE
+  SATIN
+  LACE
+  JERSEY
+  NIDHA
+  LINEN
+  VELVET
+  ORGANZA
+  GEORGETTE
+}
+
+enum Embellishment {
+  EMBROIDERY
+  BEADS
+  LACE_OVERLAY
+  CRYSTAL
+  SEQUINS
+  NONE
+}
+
+enum SleeveStyle {
+  CAPE
+  KIMONO
+  FLARED
+  FITTED
+  BELL
+  BATWING
+}
+
+enum Neckline {
+  ROUND
+  V_NECK
+  BOAT
+  STAND_COLLAR
+  HOODED
+  OPEN_FRONT
+}
+
+enum FitType {
+  FLOWY
+  RELAXED
+  STRUCTURED
+  A_LINE
+}
+
+enum GarmentLength {
+  FULL_LENGTH
+  MIDI
+  KNEE_LENGTH
+}
+
+enum TransparencyLayer {
+  INNER
+  OUTER
+  CLOSED
+}
+
+model FashionAttributes {
+  id        String   @id @default(cuid())
+  productId String   @unique
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Required fields
+  fabric            Fabric
+  embellishment     Embellishment @default(NONE)
+  sleeveStyle       SleeveStyle
+  fitType           FitType
+  transparencyLayer TransparencyLayer
+
+  // Optional fields
+  neckline Neckline?
+  length   GarmentLength?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fabric])
+  @@index([sleeveStyle])
+  @@index([fitType])
+  @@index([transparencyLayer])
+  @@map("fashion_attributes")
+}

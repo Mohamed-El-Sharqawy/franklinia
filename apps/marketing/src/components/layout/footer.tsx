@@ -10,7 +10,7 @@ export function Footer({ locale }: FooterProps) {
   const isArabic = locale === "ar";
 
   const shopLinks = [
-    { href: "/about", label: isArabic ? "عن كابيلا" : "About Us" },
+    { href: "/about", label: isArabic ? "عن فرانكلينيا" : "About Us" },
     { href: "/collections/all-products", label: isArabic ? "تسوق الكل" : "Shop All" },
     { href: "/collections", label: isArabic ? "تسوق حسب المجموعة" : "Shop by Collection" },
     { href: "/contact", label: isArabic ? "اتصل بنا" : "Contact Us" },
@@ -31,7 +31,7 @@ export function Footer({ locale }: FooterProps) {
           {/* Brand & Newsletter */}
           <div className="md:col-span-2 space-y-8">
             <Link href="/" className="text-2xl font-light uppercase tracking-[0.3em]">
-              <Image src="/logo_capella.webp" alt="Logo" width={200} height={200} />
+              <Image src="/logo_franklinia.webp" alt="Logo" width={200} height={200} />
             </Link>
             <div className="max-w-md space-y-4">
               <h3 className="text-[10px] md:text-xs font-medium uppercase tracking-[0.2em] text-gray-400">
@@ -96,7 +96,7 @@ export function Footer({ locale }: FooterProps) {
         {/* Bottom Bar */}
         <div className="mt-20 pt-8 border-t border-gray-900 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-[10px] uppercase tracking-widest text-gray-500">
-            © 2026 capella. {isArabic ? "جميع الحقوق محفوظة." : "All rights reserved."}
+            © 2026 Franklinia. {isArabic ? "جميع الحقوق محفوظة." : "All rights reserved."}
           </p>
           <div className="flex items-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
             <img src="/footer-icons/visa.svg" alt="Visa" className="h-5" />

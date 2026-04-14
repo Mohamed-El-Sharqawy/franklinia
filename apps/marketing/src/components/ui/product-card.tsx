@@ -37,12 +37,6 @@ export function ProductCard({ product, locale }: ProductCardProps) {
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  const colors = product.variants
-    ?.map((v) => v.color?.hex)
-    .filter((c, i, arr) => c && arr.indexOf(c) === i)
-    .slice(0, 6);
-
-
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -88,39 +82,39 @@ export function ProductCard({ product, locale }: ProductCardProps) {
         {/* Badges Stack */}
         <div className="absolute top-4 left-4 flex flex-col items-start gap-2 z-10 pointer-events-none">
           {discountPercent && (
-            <Badge variant="destructive" size="sm" className="shadow-lg border-none">
+            <Badge variant="destructive" className="shadow-lg border-none text-[10px] md:text-xs px-2 py-0.5">
               -{discountPercent}%
             </Badge>
           )}
 
           {product.isFeatured && (
-            <Badge variant="luxury" size="sm" className="flex gap-1.5 items-center border-none shadow-xl">
-              <Star className="h-2.5 w-2.5 fill-[#B8860B] text-[#B8860B]" />
+            <Badge variant="luxury" className="flex gap-1.5 items-center border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
+              <Star className="h-3 w-3 fill-[#B8860B] text-[#B8860B]" />
               {t("featured")}
             </Badge>
           )}
 
           {product.isTrending && (
-            <Badge variant="trending" size="sm" className="flex gap-1.5 items-center border-none shadow-md">
-              <TrendingUp className="h-2.5 w-2.5" />
+            <Badge variant="trending" className="flex gap-1.5 items-center border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
+              <TrendingUp className="h-3 w-3" />
               {t("trending")}
             </Badge>
           )}
 
           {product.badge === "NEW" && (
-            <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+            <Badge variant="outline" className="border-black/5 shadow-sm text-[10px] md:text-xs px-2 py-0.5">
               {t("badges.new")}
             </Badge>
           )}
 
           {product.badge === "BESTSELLER" && (
-            <Badge variant="default" size="sm" className="bg-amber-600 border-none shadow-md">
+            <Badge variant="default" className="bg-amber-600 border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
               {t("badges.bestseller")}
             </Badge>
           )}
 
           {product.badge === "LIMITED_EDITION" && (
-            <Badge variant="luxury" size="sm" className="bg-indigo-950 border-none shadow-xl">
+            <Badge variant="luxury" className="bg-indigo-950 border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
               {t("badges.limitedEdition")}
             </Badge>
           )}

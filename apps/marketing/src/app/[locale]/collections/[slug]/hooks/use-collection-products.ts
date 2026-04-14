@@ -15,6 +15,11 @@ interface UseCollectionProductsOptions {
   debouncedMinPrice: number;
   debouncedMaxPrice: number;
   availability: AvailabilityFilter;
+  // Fashion filters
+  fabric?: string | null;
+  occasion?: string | null;
+  fitType?: string | null;
+  sleeveStyle?: string | null;
 }
 
 interface ProductsResponse {
@@ -32,6 +37,10 @@ export function useCollectionProducts({
   debouncedMinPrice,
   debouncedMaxPrice,
   availability,
+  fabric,
+  occasion,
+  fitType,
+  sleeveStyle,
 }: UseCollectionProductsOptions) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +76,20 @@ export function useCollectionProducts({
       params.set("sortOrder", sort.sortOrder);
     }
 
+    // Fashion filters
+    if (fabric) {
+      params.set("fabric", fabric);
+    }
+    if (occasion) {
+      params.set("occasion", occasion);
+    }
+    if (fitType) {
+      params.set("fitType", fitType);
+    }
+    if (sleeveStyle) {
+      params.set("sleeveStyle", sleeveStyle);
+    }
+
     return params;
   };
 
@@ -75,7 +98,11 @@ export function useCollectionProducts({
     sortOption === DEFAULT_SORT && 
     debouncedMinPrice === DEFAULT_MIN_PRICE && 
     debouncedMaxPrice === DEFAULT_MAX_PRICE && 
-    availability === "all";
+    availability === "all" &&
+    !fabric &&
+    !occasion &&
+    !fitType &&
+    !sleeveStyle;
 
   const {
     data,
@@ -84,7 +111,7 @@ export function useCollectionProducts({
     isFetching,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["collection-products", slug, sortOption, debouncedMinPrice, debouncedMaxPrice, availability],
+    queryKey: ["collection-products", slug, sortOption, debouncedMinPrice, debouncedMaxPrice, availability, fabric, occasion, fitType, sleeveStyle],
     queryFn: async ({ pageParam = 1 }) => {
       const params = buildQueryParams(pageParam);
       const response = await apiGet<ProductsResponse>(`/api/products?${params}`);

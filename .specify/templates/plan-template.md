@@ -33,9 +33,11 @@
 
 - [ ] **I. Architectural Purity**: No direct inter-app imports; shared logic in `packages/`
 - [ ] **II. Sub-System Consistency**: Backend modules follow `src/modules/[feature]`; frontend parity maintained; shared UI components extracted
-- [ ] **III. Jewellery Brand Protocols**: AED currency only; AR/EN translations provided; Stripe standard only (no Connect)
-- [ ] **IV. Media & Search**: Cloudinary for all media assets; search analytics tracked in backend
-- [ ] **V. Structural Cleanliness**: Cross-app types/utils extracted to packages; no duplicated business logic
+- [ ] **III. Modest Fashion Domain Protocols**: AED currency only; AR/EN translations provided; Stripe standard only (no Connect); base categories constrained (Abaya/Jalabiya/Modest Dress); fashion attributes are mandatory structured data; occasions are first-class entity
+- [ ] **IV. Fashion-First Data Architecture**: FashionAttributes entity exists (not flat on Product); Product-Occasion N:N via join entity; Collections support filter configs; Variants include fitAdjustment; narrative separated from structured attributes
+- [ ] **V. Occasion-Driven Discovery**: Occasion entity with slug; occasion as primary filter dimension; occasion landing pages supported; browsing prioritizes style/occasion/fabric over SKU
+- [ ] **VI. Media & Search**: Cloudinary for all media assets; fashion-aware search (fabric, occasion, style, silhouette); search analytics tracked in backend
+- [ ] **VII. Structural Cleanliness**: Cross-app types/utils extracted to packages; no duplicated business logic
 
 ## Project Structure
 

@@ -32,6 +32,15 @@ function CollectionPageContent({
     setIsFilterOpen,
     availability,
     setAvailability,
+    // Fashion filters
+    fabric,
+    setFabric,
+    occasion,
+    setOccasion,
+    fitType,
+    setFitType,
+    sleeveStyle,
+    setSleeveStyle,
     navigateToCollection,
     clearFilters,
   } = useCollectionFilters();
@@ -44,6 +53,11 @@ function CollectionPageContent({
     debouncedMinPrice,
     debouncedMaxPrice,
     availability,
+    // Fashion filters
+    fabric,
+    occasion,
+    fitType,
+    sleeveStyle,
   });
 
   // Track collection view on mount
@@ -101,6 +115,15 @@ function CollectionPageContent({
         maxPrice={maxPrice}
         onMinPriceChange={setMinPrice}
         onMaxPriceChange={setMaxPrice}
+        // Fashion filters
+        fabric={fabric}
+        onFabricChange={setFabric}
+        occasion={occasion}
+        onOccasionChange={setOccasion}
+        fitType={fitType}
+        onFitTypeChange={setFitType}
+        sleeveStyle={sleeveStyle}
+        onSleeveStyleChange={setSleeveStyle}
       />
     </div>
   );

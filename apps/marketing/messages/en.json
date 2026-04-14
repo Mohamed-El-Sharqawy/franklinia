@@ -9,6 +9,7 @@
     "new": "New",
     "featured": "Featured",
     "trending": "Trending",
+    "checkout": "Checkout",
     "badges": {
       "new": "New",
       "bestseller": "Bestseller",
@@ -165,6 +166,9 @@
     "deliveryNotes": "Delivery Notes",
     "deliveryNotesPlaceholder": "Any special delivery instructions...",
     "comingSoon": "Coming Soon",
+    "onlinePayment": "Online Payment",
+    "onlinePaymentDesc": "Pay securely via Credit Card, Apple Pay, or Google Pay",
+    "tabby": "TABBY",
     "qty": "Qty:",
     "infoSecure": "Your information is secure",
     "haveCoupon": "Have a coupon code?",
@@ -180,6 +184,7 @@
     "exclusiveOffers": "Get exclusive coupons & offers",
     "saveAddresses": "Save addresses for faster checkout",
     "signInNow": "Sign in now",
+    "shippingAddressTitle": "Shipping Address",
     "success": {
       "title": "Order Confirmed!",
       "message": "Thank you for your purchase. Your order has been successfully processed.",
@@ -220,7 +225,7 @@
       "placeholder": "Enter your email",
       "button": "Subscribe"
     },
-    "copyright": "© 2026 Capella. All rights reserved."
+    "copyright": "© 2026 Franklinia. All rights reserved."
   },
   "contact": {
     "title": "Contact Us",
@@ -260,7 +265,7 @@
       "phone": "Phone",
       "phoneValue": "+971 50 123 4567",
       "email": "Email",
-      "emailValue": "support@nznstudio.com",
+      "emailValue": "support@frankliniaae.com",
       "address": "Address",
       "addressValue": "Dubai, UAE",
       "hours": "Working Hours",
@@ -371,6 +376,30 @@
     "intro": {
       "title": "Introduction",
       "description": "By using our website and services, you agree to be bound by these terms and conditions. Please read them carefully before using the site."
+    },
+    "use": {
+      "title": "Use of Website",
+      "description": "You must be 18 years or older to use this website. You are responsible for maintaining the confidentiality of your account and providing accurate information."
+    },
+    "account": {
+      "title": "Account Responsibilities",
+      "description": "You are responsible for maintaining the confidentiality of your account credentials and for all activities under your account. You must notify us immediately of any unauthorized use."
+    },
+    "purchase": {
+      "title": "Orders and Purchases",
+      "description": "All prices are in UAE Dirhams and subject to change. We reserve the right to refuse or cancel any order. Product availability is subject to stock."
+    },
+    "intellectual": {
+      "title": "Intellectual Property",
+      "description": "All content on this website, including text, images, logos, and designs, is our property and protected by copyright laws."
+    },
+    "termination": {
+      "title": "Termination",
+      "description": "We may terminate or suspend your access to our website immediately, without prior notice, if you breach these terms. Upon termination, your right to use the website will immediately cease."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "description": "We reserve the right to modify these terms at any time. Changes will be posted on this page and your continued use of the website constitutes acceptance of the modified terms."
     },
     "usage": {
       "title": "Use of Website",
@@ -611,20 +640,11 @@
     }
   },
   "about": {
-    "title": "About Capella",
+    "title": "About Us",
     "story": {
-      "title": "Our Story",
-      "subtitle": "Crafting Elegance Since 1990",
-      "content": "Inspired by the beauty of cosmos, stars and the mysteries of outer space. We believe that just like stars, every individual shines with their own unique light. With CAPELLA explore the unknown, embrace the extraordinary and shine beyond."
-    },
-    "philosophy": {
-      "title": "Our Philosophy",
-      "quality": "Uncompromising Quality",
-      "qualityDesc": "We source the finest materials and employ master artisans to ensure every piece meets the highest standards.",
-      "craftsmanship": "Artisanal Craftsmanship",
-      "craftsmanshipDesc": "Each design is a labor of love, combining age-old techniques with modern innovation.",
-      "innovation": "Modern Innovation",
-      "innovationDesc": "We continuously push boundaries in design, creating unique geometric patterns that define modern luxury."
+      "title": "About Us",
+      "subtitle": "Defined by elegance. Worn with intention.",
+      "content": "Franklinia Boutique is a celebration of refined elegance, where timeless design meets modern sophistication.\n\nRooted in a deep appreciation for craftsmanship and detail, Franklinia curates exclusive pieces that embody quiet luxury and effortless grace. Every collection is intentionally selected to reflect a balance of understated beauty and distinctive character — designed for those who value quality beyond trends.\n\nWe believe true style is enduring. It is found in impeccable fabrics, precise tailoring, and silhouettes that transcend seasons. Our pieces are created to elevate everyday moments and accompany you through life’s most memorable occasions with confidence and poise.\n\nAt Franklinia, luxury is not loud — it is felt. It is in the experience, the detail, and the identity each piece carries.\n\nFranklinia Boutique — Defined by elegance. Worn with intention."
     }
   }
 }

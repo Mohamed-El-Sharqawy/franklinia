@@ -6,7 +6,6 @@ import { Link } from "@/i18n/navigation";
 import { Heart, Eye } from "lucide-react";
 import type { Product, ProductVariant } from "@ecommerce/shared-types";
 import { useCart } from "@/contexts/cart-context";
-import { createCartItemFromVariant } from "@/lib/cart";
 import { QuickViewModal } from "./quick-view-modal";
 import { useTranslations } from "next-intl";
 import { Badge } from "./badge";
@@ -28,7 +27,6 @@ export function ProductCardHorizontal({
     product.variants?.[0] ?? null
   );
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null);
 
   const isArabic = locale === "ar";
   const name = isArabic ? product.nameAr : product.nameEn;
@@ -44,39 +42,6 @@ export function ProductCardHorizontal({
     compareAtPrice && compareAtPrice > price
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
-
-  // Get unique colors from variants
-  const uniqueColors = product.variants
-    ?.filter((v) => v.color)
-    .reduce((acc, v) => {
-      if (v.color && !acc.find((c) => c.id === v.color!.id)) {
-        acc.push({ ...v.color, variantId: v.id });
-      }
-      return acc;
-    }, [] as Array<{ id: string; hex: string; nameEn: string; nameAr: string; variantId: string }>)
-    .slice(0, 8);
-
-  // Get unique sizes from variants
-  const uniqueSizes = product.variants
-    ?.filter((v) => v.size)
-    .reduce((acc, v) => {
-      if (v.size && !acc.find((s) => s.id === v.size!.id)) {
-        acc.push({ ...v.size, variantId: v.id });
-      }
-      return acc;
-    }, [] as Array<{ id: string; nameEn: string; nameAr: string; position: number; variantId: string }>)
-    .sort((a, b) => a.position - b.position);
-
-  const handleColorClick = (colorId: string) => {
-    const variant = product.variants?.find((v) => v.color?.id === colorId);
-    if (variant) {
-      setSelectedVariant(variant);
-    }
-  };
-
-  const handleSizeSelect = (sizeId: string) => {
-    setSelectedSizeId(sizeId === selectedSizeId ? null : sizeId);
-  };
 
   return (
     <>
@@ -98,41 +63,41 @@ export function ProductCardHorizontal({
               </div>
             )}
             {/* Badges Stack */}
-            <div className="absolute top-3 left-3 flex flex-col items-start gap-1 z-10 pointer-events-none">
+            <div className="absolute top-4 left-4 flex flex-col items-start gap-2 z-10 pointer-events-none">
               {discountPercent && (
-                <Badge variant="destructive" size="sm" className="shadow-lg border-none">
+                <Badge variant="destructive" className="shadow-lg border-none text-[10px] md:text-xs px-2 py-0.5">
                   -{discountPercent}%
                 </Badge>
               )}
 
               {product.isFeatured && (
-                <Badge variant="luxury" size="sm" className="flex gap-1.5 items-center border-none shadow-xl">
-                  <Star className="h-2.5 w-2.5 fill-[#B8860B] text-[#B8860B]" />
+                <Badge variant="luxury" className="flex gap-1.5 items-center border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
+                  <Star className="h-3 w-3 fill-[#B8860B] text-[#B8860B]" />
                   {t("featured")}
                 </Badge>
               )}
 
               {product.isTrending && (
-                <Badge variant="trending" size="sm" className="flex gap-1.5 items-center border-none shadow-md">
-                  <TrendingUp className="h-2.5 w-2.5" />
+                <Badge variant="trending" className="flex gap-1.5 items-center border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
+                  <TrendingUp className="h-3 w-3" />
                   {t("trending")}
                 </Badge>
               )}
 
               {product.badge === "NEW" && (
-                <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                <Badge variant="outline" className="border-black/5 shadow-sm text-[10px] md:text-xs px-2 py-0.5">
                   {t("badges.new")}
                 </Badge>
               )}
 
               {product.badge === "BESTSELLER" && (
-                <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                <Badge variant="default" className="bg-amber-600 border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
                   {t("badges.bestseller")}
                 </Badge>
               )}
 
               {product.badge === "LIMITED_EDITION" && (
-                <Badge variant="luxury" size="sm" className="bg-indigo-950 border-none shadow-xl">
+                <Badge variant="luxury" className="bg-indigo-950 border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
                   {t("badges.limitedEdition")}
                 </Badge>
               )}
@@ -141,7 +106,7 @@ export function ProductCardHorizontal({
         </Link>
 
         {/* Product Info */}
-        <div className={`flex-1 ${isArabic ? "text-right" : ""}`}>
+        <div className={`flex-1 flex flex-col justify-center ${isArabic ? "text-right" : ""}`}>
           <Link href={`/products/${product.slug}`}>
             <h3 className="text-lg font-medium hover:underline">{name}</h3>
           </Link>
@@ -165,56 +130,25 @@ export function ProductCardHorizontal({
             </p>
           )}
 
-          {/* Colors */}
-          {uniqueColors && uniqueColors.length > 0 && (
-            <div className="flex gap-2 mt-4">
-              {uniqueColors.map((color) => (
-                <button
-                  key={color.id}
-                  onClick={() => handleColorClick(color.id)}
-                  className={`h-6 w-6 rounded-full border-2 transition-transform hover:scale-110 ${selectedVariant?.color?.id === color.id
-                    ? "border-black ring-1 ring-black ring-offset-1"
-                    : "border-gray-300"
-                    }`}
-                  style={{ backgroundColor: color.hex }}
-                  aria-label={isArabic ? color.nameAr : color.nameEn}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Sizes */}
-          {uniqueSizes && uniqueSizes.length > 0 && (
-            <div className="flex gap-2 mt-4">
-              {uniqueSizes.map((size) => (
-                <button
-                  key={size.id}
-                  onClick={() => handleSizeSelect(size.id)}
-                  className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${selectedSizeId === size.id
-                    ? "bg-black text-white border-black"
-                    : "border-gray-300 hover:border-black"
-                    }`}
-                >
-                  {isArabic ? size.nameAr : size.nameEn}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 mt-4">
-            <button
-              className="p-2 border rounded hover:bg-gray-100 transition"
-              aria-label="Add to wishlist"
-            >
-              <Heart className="h-4 w-4" />
-            </button>
+          {/* Actions */}
+          <div className={`flex items-center gap-3 mt-auto pt-6 ${isArabic ? "flex-row-reverse" : ""}`}>
             <button
               onClick={() => setIsQuickViewOpen(true)}
-              className="p-2 border rounded hover:bg-gray-100 transition"
-              aria-label="Quick view"
+              className="flex items-center gap-2 px-6 py-2.5 bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-black/90 transition-colors"
             >
               <Eye className="h-4 w-4" />
+              QUICK VIEW
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Add favourite logic here
+              }}
+              className={`p-2.5 rounded-full border transition-colors border-gray-200 text-gray-600 hover:border-black hover:text-black`}
+              aria-label="Add to favourites"
+            >
+              <Heart className="h-4 w-4" />
             </button>
           </div>
         </div>

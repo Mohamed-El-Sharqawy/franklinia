@@ -21,7 +21,9 @@ export const product = new Elysia({ prefix: "/products" })
   // Admin/Editor routes
   .use(authPlugin)
   .post("/", async ({ body }) => {
-    const product = await ProductService.create(body);
+    const result = await ProductService.create(body);
+    if (result && 'ok' in result && !result.ok) return status(result.status, { success: false as const, error: result.error });
+    const product = result && 'ok' in result ? result.data : result;
     return status(201, { success: true as const, data: product });
   }, { isEditor: true, body: ProductModel.createBody })
   .put("/reorder", async ({ body }) => {
@@ -29,9 +31,10 @@ export const product = new Elysia({ prefix: "/products" })
     return { success: true, message: "Products reordered" };
   }, { isEditor: true, body: ProductModel.reorderBody })
   .put("/:id", async ({ params, body }) => {
-    const product = await ProductService.update(params.id, body);
-    if (!product) return status(404, { success: false as const, error: "Product not found" });
-    return { success: true as const, data: product };
+    const result = await ProductService.update(params.id, body);
+    if (!result) return status(404, { success: false as const, error: "Product not found" });
+    if ('ok' in result && !result.ok) return status(result.status, { success: false as const, error: result.error });
+    return { success: true as const, data: result.data };
   }, { isEditor: true, body: ProductModel.updateBody })
   .delete("/:id", async ({ params }) => {
     const result = await ProductService.delete(params.id);

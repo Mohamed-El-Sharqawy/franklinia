@@ -41,7 +41,7 @@ function InstagramPostCard({
     <div className="relative aspect-square overflow-hidden rounded-sm group cursor-pointer">
       <Image
         src={post.imageUrl}
-        alt={altText || "capella luxury"}
+        alt={altText || "Franklinia luxury"}
         fill
         className="object-cover transition-all duration-1000 group-hover:scale-110"
       />

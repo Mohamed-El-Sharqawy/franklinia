@@ -38,7 +38,6 @@ export function ProductCardWithVariants({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
@@ -61,74 +60,18 @@ export function ProductCardWithVariants({
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  // Get unique colors from variants
-  const uniqueColors = product.variants
-    ?.filter((v) => v.color)
-    .reduce((acc, v) => {
-      if (v.color && !acc.find((c) => c.id === v.color!.id)) {
-        acc.push({ ...v.color, variantId: v.id });
-      }
-      return acc;
-    }, [] as Array<{ id: string; hex: string; nameEn: string; nameAr: string; variantId: string }>)
-    .slice(0, 8);
-
-  // Get unique sizes from variants
-  const uniqueSizes = product.variants
-    ?.filter((v) => v.size)
-    .reduce((acc, v) => {
-      if (v.size && !acc.find((s) => s.id === v.size!.id)) {
-        acc.push({ ...v.size, variantId: v.id });
-      }
-      return acc;
-    }, [] as Array<{ id: string; nameEn: string; nameAr: string; position: number; variantId: string }>)
-    .sort((a, b) => a.position - b.position);
-
-  const handleColorHover = (colorId: string) => {
-    const variant = product.variants?.find((v) => v.color?.id === colorId);
-    if (variant) {
-      setSelectedVariant(variant);
-    }
-  };
-
-  const handleSizeSelect = (sizeId: string) => {
-    setSelectedSizeId(sizeId);
-    // Find variant with current color and selected size
-    if (selectedVariant?.color?.id) {
-      const matchingVariant = product.variants?.find(
-        (v) =>
-          v.color?.id === selectedVariant.color?.id && v.size?.id === sizeId
-      );
-      if (matchingVariant) {
-        setSelectedVariant(matchingVariant);
-      }
-    }
-  };
-
   const handleQuickAdd = () => {
     if (!selectedVariant) return;
 
-    // Ensure we have a variant with the selected size
-    let variantToAdd = selectedVariant;
-    if (selectedSizeId && selectedVariant.size?.id !== selectedSizeId) {
-      const matchingVariant = product.variants?.find(
-        (v) =>
-          v.color?.id === selectedVariant.color?.id &&
-          v.size?.id === selectedSizeId
-      );
-      if (matchingVariant) {
-        variantToAdd = matchingVariant;
-      }
-    }
-
     setIsAdding(true);
-    const newCartItem = createCartItemFromVariant(variantToAdd, {
+    const newCartItem = createCartItemFromVariant(selectedVariant, {
       id: product.id,
       slug: product.slug,
       nameEn: product.nameEn,
       nameAr: product.nameAr,
     });
     addItem(newCartItem);
-    trackQuickAddToCart(product.id, variantToAdd.id, name, variantToAdd.price, 1);
+    trackQuickAddToCart(product.id, selectedVariant.id, name, selectedVariant.price, 1);
 
     // Show success state briefly
     setTimeout(() => {
@@ -157,7 +100,6 @@ export function ProductCardWithVariants({
         onMouseEnter={() => setIsCardHovered(true)}
         onMouseLeave={() => {
           setIsCardHovered(false);
-          setSelectedSizeId(null);
         }}
       >
         <div
@@ -202,39 +144,39 @@ export function ProductCardWithVariants({
               {/* Badges Stack */}
               <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 z-10 pointer-events-none">
                 {discountPercent && (
-                  <Badge variant="destructive" size="sm" className="shadow-lg border-none">
+                  <Badge variant="destructive" className="shadow-lg border-none text-[10px] md:text-xs px-2 py-0.5">
                     -{discountPercent}%
                   </Badge>
                 )}
 
                 {product.isFeatured && (
-                  <Badge variant="luxury" size="sm" className="flex gap-1.5 items-center border-none shadow-xl">
-                    <Star className="h-2.5 w-2.5 fill-[#B8860B] text-[#B8860B]" />
+                  <Badge variant="luxury" className="flex gap-1.5 items-center border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
+                    <Star className="h-3 w-3 fill-[#B8860B] text-[#B8860B]" />
                     {t("featured")}
                   </Badge>
                 )}
 
                 {product.isTrending && (
-                  <Badge variant="trending" size="sm" className="flex gap-1.5 items-center border-none shadow-md">
-                    <TrendingUp className="h-2.5 w-2.5" />
+                  <Badge variant="trending" className="flex gap-1.5 items-center border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
+                    <TrendingUp className="h-3 w-3" />
                     {t("trending")}
                   </Badge>
                 )}
 
                 {product.badge === "NEW" && (
-                  <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                  <Badge variant="outline" className="border-black/5 shadow-sm text-[10px] md:text-xs px-2 py-0.5">
                     {t("badges.new")}
                   </Badge>
                 )}
 
                 {product.badge === "BESTSELLER" && (
-                  <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                  <Badge variant="outline" className="border-black/5 shadow-sm text-[10px] md:text-xs px-2 py-0.5">
                     {t("badges.bestseller")}
                   </Badge>
                 )}
 
                 {product.badge === "LIMITED_EDITION" && (
-                  <Badge variant="luxury" size="sm" className="bg-indigo-950 border-none shadow-xl">
+                  <Badge variant="luxury" className="bg-indigo-950 border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
                     {t("badges.limitedEdition")}
                   </Badge>
                 )}
@@ -290,7 +232,7 @@ export function ProductCardWithVariants({
               }`}
           >
             {/* Quick Action Buttons */}
-            <div className="flex border-b">
+            <div className="flex border-t border-gray-100">
               {cartItem ? (
                 // Show quantity controls when item is in cart
                 <>
@@ -299,105 +241,70 @@ export function ProductCardWithVariants({
                       onClick={handleDecrement}
                       className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition active:scale-95"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-3 w-3" />
                     </button>
-                    <span className="w-8 text-center text-sm font-semibold">{cartItem.quantity}</span>
+                    <span className="w-8 text-center text-xs font-semibold">{cartItem.quantity}</span>
                     <button
                       onClick={handleIncrement}
                       className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition active:scale-95"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3 w-3" />
                     </button>
                   </div>
                   <Link
                     href="/checkout"
-                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] md:text-xs font-semibold tracking-wider bg-black text-white hover:bg-black/90 transition uppercase"
                   >
-                    <ShoppingCart className="h-4 w-4" />
-                    CHECKOUT
+                    <ShoppingCart className="h-3.5 w-3.5" />
+                    {t("checkout")}
                   </Link>
                 </>
               ) : (
                 // Show quick add button when not in cart
                 <>
                   <button
-                    onClick={handleQuickAdd}
-                    disabled={isAdding}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium hover:bg-gray-100 transition border-r disabled:opacity-50"
+                    onClick={() => setIsQuickViewOpen(true)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] md:text-xs font-semibold tracking-wider hover:bg-gray-50 transition uppercase border-r"
                   >
-                    {isAdding ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : justAdded ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <ShoppingBag className="h-4 w-4" />
-                    )}
-                    {isAdding ? "ADDING..." : justAdded ? "ADDED!" : "QUICK ADD"}
+                    <Eye className="h-3.5 w-3.5" />
+                    QUICK VIEW
                   </button>
                   <button
-                    onClick={() => setIsQuickViewOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium hover:bg-gray-100 transition"
+                    onClick={handleQuickAdd}
+                    disabled={isAdding}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] md:text-xs font-semibold tracking-wider hover:bg-gray-50 transition uppercase disabled:opacity-50"
                   >
-                    <Eye className="h-4 w-4" />
-                    QUICK VIEW
+                    {isAdding ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : justAdded ? (
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <ShoppingBag className="h-3.5 w-3.5" />
+                    )}
+                    {isAdding ? "ADDING" : justAdded ? "ADDED" : "QUICK ADD"}
                   </button>
                 </>
               )}
             </div>
-
-            {/* Size Selector */}
-            {uniqueSizes && uniqueSizes.length > 0 && (
-              <div className="flex justify-center gap-2 py-3 px-2">
-                {uniqueSizes.map((size) => (
-                  <button
-                    key={size.id}
-                    onClick={() => handleSizeSelect(size.id)}
-                    className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${selectedSizeId === size.id
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-border hover:border-primary"
-                      }`}
-                  >
-                    {isArabic ? size.nameAr : size.nameEn}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="mt-1.5 space-y-0.5">
+        <div className="mt-3 text-center space-y-1.5 px-2">
           <Link href={`/products/${product.slug}`}>
-            <h3 className="text-[13px] font-medium line-clamp-1 hover:underline">
+            <h3 className="text-[11px] md:text-xs font-medium uppercase tracking-[0.15em] line-clamp-1 group-hover:opacity-60 transition-opacity">
               {name}
             </h3>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center gap-0.5">
             {compareAtPrice && compareAtPrice > price && (
-              <span className="text-sm text-muted-foreground line-through">
+              <span className="text-[10px] text-muted-foreground line-through tracking-wider">
                 AED {compareAtPrice.toLocaleString()}
               </span>
             )}
-            <span className="text-sm font-semibold text-red-600">
+            <span className="text-xs font-semibold tracking-widest text-black">
               AED {price.toLocaleString()}
             </span>
           </div>
-
-          {uniqueColors && uniqueColors.length > 0 && (
-            <div className="flex gap-1 pt-1">
-              {uniqueColors.map((color) => (
-                <button
-                  key={color.id}
-                  className={`h-4 w-4 rounded-full border transition-transform hover:scale-125 ${selectedVariant?.color?.id === color.id
-                    ? "border-primary ring-1 ring-primary ring-offset-1"
-                    : "border-border"
-                    }`}
-                  style={{ backgroundColor: color.hex }}
-                  onMouseEnter={() => handleColorHover(color.id)}
-                  aria-label={isArabic ? color.nameAr : color.nameEn}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
 

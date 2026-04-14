@@ -12,11 +12,7 @@ export interface CartItem {
   compareAtPrice?: number | null;
   quantity: number;
   imageUrl?: string;
-  colorHex?: string;
-  colorNameEn?: string;
-  colorNameAr?: string;
-  sizeNameEn?: string;
-  sizeNameAr?: string;
+  optionValues?: Array<{ valueEn: string; valueAr: string }>;
   collectionId?: string;
   collectionSlug?: string;
 }
@@ -111,11 +107,7 @@ export function createCartItemFromVariant(
     compareAtPrice: variant.compareAtPrice,
     quantity,
     imageUrl: variant.images?.[0]?.url,
-    colorHex: variant.color?.hex,
-    colorNameEn: variant.color?.nameEn,
-    colorNameAr: variant.color?.nameAr,
-    sizeNameEn: variant.size?.nameEn,
-    sizeNameAr: variant.size?.nameAr,
+    optionValues: variant.optionValues?.map(ov => ({ valueEn: ov.valueEn, valueAr: ov.valueAr })),
     collectionId: product.collectionId ?? undefined,
     collectionSlug: product.collection?.slug,
   };

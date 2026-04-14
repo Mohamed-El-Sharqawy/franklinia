@@ -13,30 +13,34 @@ export async function PromoBanner({ locale }: PromoBannerProps) {
   return (
     <section className="mx-auto max-w-7xl px-4 py-16 md:py-24">
       <AnimateOnScroll direction="up">
-        <div className="relative w-full aspect-21/9 min-h-[300px] overflow-hidden rounded-sm group">
-          <Image
-            src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1400&h=600&fit=crop"
-            alt="Promo Banner"
-            fill
-            className="object-cover transition-transform duration-1000 group-hover:scale-105"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center p-6 space-y-6">
-            <div className="space-y-4 max-w-2xl">
-              <h2 className="text-3xl md:text-5xl font-light uppercase tracking-[0.3em]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 bg-white">
+          {/* Image Section */}
+          <div className="relative w-full aspect-3/4 md:aspect-auto md:min-h-[600px] overflow-hidden group">
+            <Image
+              src="/images/promo.png"
+              alt="Promo Banner"
+              fill
+              className="object-cover transition-transform duration-1000 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
+          </div>
+
+          {/* Content Section */}
+          <div className="flex flex-col items-center justify-center text-black text-center p-8 md:p-12 lg:p-16 bg-white">
+            <div className="space-y-6 max-w-md">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight">
                 {t("title")}
               </h2>
-              <p className="text-xs md:text-sm uppercase tracking-[0.2em] font-light opacity-90">
+              <p className="text-sm md:text-base leading-relaxed text-gray-700">
                 {t("description")}
               </p>
+              <Link
+                href="/collections/all-products"
+                className="inline-block text-sm md:text-base font-semibold uppercase tracking-wider border-b-2 border-black pb-1 hover:opacity-70 transition-opacity"
+              >
+                {t("cta")}
+              </Link>
             </div>
-            <Link
-              href="/collections/all-products"
-              className="px-10 py-4 bg-white text-black text-[10px] md:text-xs font-medium uppercase tracking-[0.3em] hover:bg-black hover:text-white transition-all duration-300"
-            >
-              {t("cta")}
-            </Link>
           </div>
         </div>
       </AnimateOnScroll>

@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import type { ContactFormData, SubmitStatus } from "../types";
 import { INITIAL_FORM_DATA } from "../constants";
 
+import { apiPost } from "@/lib/api-client";
+
 export function useContactForm() {
   const [formData, setFormData] = useState<ContactFormData>(INITIAL_FORM_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,16 +25,19 @@ export function useContactForm() {
     setSubmitStatus("idle");
 
     try {
-      // Simulate API call - replace with actual API endpoint
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await apiPost("/api/forms", {
+        type: "CONTACT",
+        payload: formData,
+      });
       setSubmitStatus("success");
       setFormData(INITIAL_FORM_DATA);
-    } catch {
+    } catch (error) {
+      console.error("Failed to submit contact form:", error);
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [formData]);
 
   const resetStatus = useCallback(() => {
     setSubmitStatus("idle");

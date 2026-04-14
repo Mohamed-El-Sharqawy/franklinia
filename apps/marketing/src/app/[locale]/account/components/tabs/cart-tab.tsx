@@ -78,21 +78,13 @@ export function CartTab({ locale }: CartTabProps) {
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-center">
-                  {item.colorHex ? (
-                    <div className="flex items-center justify-center gap-1">
-                      <span
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: item.colorHex }}
-                      />
-                      <span className="text-xs">{isArabic ? item.colorNameAr : item.colorNameEn}</span>
-                    </div>
-                  ) : (
-                    "-"
-                  )}
-                </td>
                 <td className="px-4 py-3 text-center text-sm">
-                  {isArabic ? item.sizeNameAr : item.sizeNameEn || "-"}
+                  {item.optionValues?.map((ov, i) => (
+                    <span key={i}>
+                      {i > 0 && ' / '}
+                      {isArabic ? ov.valueAr : ov.valueEn}
+                    </span>
+                  )) || "-"}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <div className="flex flex-col items-center">

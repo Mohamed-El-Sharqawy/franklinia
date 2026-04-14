@@ -92,7 +92,7 @@ export interface Banner {
   updatedAt: string;
 }
 
-// Instagram Post types (capella - FW25 Drops gallery)
+// Instagram Post types (Franklinia - FW25 Drops gallery)
 export interface InstagramPost {
   id: string;
   imageUrl: string;
@@ -101,6 +101,37 @@ export interface InstagramPost {
   altEn?: string | null;
   altAr?: string | null;
   position: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Dynamic Pages (About, Size Guide, etc.)
+export interface Page {
+  id: string;
+  slug: string;
+  titleEn: string;
+  titleAr: string;
+  contentEn: string;
+  contentAr: string;
+  metaTitleEn?: string | null;
+  metaTitleAr?: string | null;
+  metaDescriptionEn?: string | null;
+  metaDescriptionAr?: string | null;
+  isActive: boolean;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Legal Policies (Shipping, Privacy, etc.)
+export interface Policy {
+  id: string;
+  slug: string;
+  titleEn: string;
+  titleAr: string;
+  contentEn: string;
+  contentAr: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
