@@ -16,6 +16,7 @@ import { AnalyticsPage } from "./pages/analytics";
 import { StaticPagesPage } from "./pages/static-pages";
 import { InquiriesPage } from "./pages/inquiries";
 import { LoginPage } from "./pages/login";
+import { OccasionsPage } from "./pages/occasions";
 
 export const router = createBrowserRouter([
   {
@@ -97,6 +98,10 @@ export const router = createBrowserRouter([
       {
         path: "inquiries",
         element: <InquiriesPage />,
+      },
+      {
+        path: "occasions",
+        element: <OccasionsPage />,
       },
     ],
   },

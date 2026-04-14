@@ -11,6 +11,7 @@ import {
   Image,
   MessageSquare,
   BarChart3,
+  Tags,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const navItems = [
   { label: "Banners", href: "/banners", icon: Image },
   { label: "Pages", href: "/static-pages", icon: FolderTree },
   { label: "Inquiries", href: "/inquiries", icon: MessageSquare },
+  { label: "Occasions", href: "/occasions", icon: Tags },
   { label: "Users", href: "/users", icon: Users },
 ];
 
