@@ -38,7 +38,6 @@ export function ProductCardWithVariants({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [selectedOptionValueId, setSelectedOptionValueId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
@@ -60,47 +59,6 @@ export function ProductCardWithVariants({
     compareAtPrice && compareAtPrice > price
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
-
-  // Get unique first option values from variants (e.g., Color or Size)
-  const firstOptionValues = product.variants
-    ?.flatMap((v) => v.optionValues?.[0] ? [v.optionValues[0]] : [])
-    .reduce((acc: any[], ov) => {
-      if (!acc.find((a) => a.id === ov.id)) {
-        acc.push(ov);
-      }
-      return acc;
-    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>)
-    .slice(0, 8);
-
-  // Get unique second option values from variants (if exists)
-  const secondOptionValues = product.variants
-    ?.flatMap((v) => v.optionValues?.[1] ? [v.optionValues[1]] : [])
-    .reduce((acc: any[], ov) => {
-      if (!acc.find((a) => a.id === ov.id)) {
-        acc.push(ov);
-      }
-      return acc;
-    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>);
-
-  const handleOptionHover = (optionValueId: string) => {
-    const variant = product.variants?.find((v) => 
-      v.optionValues?.some((ov) => ov.id === optionValueId)
-    );
-    if (variant) {
-      setSelectedVariant(variant);
-    }
-  };
-
-  const handleOptionSelect = (optionValueId: string) => {
-    setSelectedOptionValueId(optionValueId);
-    // Find variant with selected option
-    const matchingVariant = product.variants?.find((v) =>
-      v.optionValues?.some((ov) => ov.id === optionValueId)
-    );
-    if (matchingVariant) {
-      setSelectedVariant(matchingVariant);
-    }
-  };
 
   const handleQuickAdd = () => {
     if (!selectedVariant) return;
@@ -142,7 +100,6 @@ export function ProductCardWithVariants({
         onMouseEnter={() => setIsCardHovered(true)}
         onMouseLeave={() => {
           setIsCardHovered(false);
-          setSelectedOptionValueId(null);
         }}
       >
         <div
@@ -187,39 +144,39 @@ export function ProductCardWithVariants({
               {/* Badges Stack */}
               <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5 z-10 pointer-events-none">
                 {discountPercent && (
-                  <Badge variant="destructive" size="sm" className="shadow-lg border-none">
+                  <Badge variant="destructive" className="shadow-lg border-none text-[10px] md:text-xs px-2 py-0.5">
                     -{discountPercent}%
                   </Badge>
                 )}
 
                 {product.isFeatured && (
-                  <Badge variant="luxury" size="sm" className="flex gap-1.5 items-center border-none shadow-xl">
-                    <Star className="h-2.5 w-2.5 fill-[#B8860B] text-[#B8860B]" />
+                  <Badge variant="luxury" className="flex gap-1.5 items-center border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
+                    <Star className="h-3 w-3 fill-[#B8860B] text-[#B8860B]" />
                     {t("featured")}
                   </Badge>
                 )}
 
                 {product.isTrending && (
-                  <Badge variant="trending" size="sm" className="flex gap-1.5 items-center border-none shadow-md">
-                    <TrendingUp className="h-2.5 w-2.5" />
+                  <Badge variant="trending" className="flex gap-1.5 items-center border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
+                    <TrendingUp className="h-3 w-3" />
                     {t("trending")}
                   </Badge>
                 )}
 
                 {product.badge === "NEW" && (
-                  <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                  <Badge variant="outline" className="border-black/5 shadow-sm text-[10px] md:text-xs px-2 py-0.5">
                     {t("badges.new")}
                   </Badge>
                 )}
 
                 {product.badge === "BESTSELLER" && (
-                  <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                  <Badge variant="outline" className="border-black/5 shadow-sm text-[10px] md:text-xs px-2 py-0.5">
                     {t("badges.bestseller")}
                   </Badge>
                 )}
 
                 {product.badge === "LIMITED_EDITION" && (
-                  <Badge variant="luxury" size="sm" className="bg-indigo-950 border-none shadow-xl">
+                  <Badge variant="luxury" className="bg-indigo-950 border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
                     {t("badges.limitedEdition")}
                   </Badge>
                 )}
@@ -275,7 +232,7 @@ export function ProductCardWithVariants({
               }`}
           >
             {/* Quick Action Buttons */}
-            <div className="flex border-b">
+            <div className="flex border-t border-gray-100">
               {cartItem ? (
                 // Show quantity controls when item is in cart
                 <>
@@ -284,108 +241,70 @@ export function ProductCardWithVariants({
                       onClick={handleDecrement}
                       className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition active:scale-95"
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-3 w-3" />
                     </button>
-                    <span className="w-8 text-center text-sm font-semibold">{cartItem.quantity}</span>
+                    <span className="w-8 text-center text-xs font-semibold">{cartItem.quantity}</span>
                     <button
                       onClick={handleIncrement}
                       className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition active:scale-95"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3 w-3" />
                     </button>
                   </div>
                   <Link
                     href="/checkout"
-                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] md:text-xs font-semibold tracking-wider bg-black text-white hover:bg-black/90 transition uppercase"
                   >
-                    <ShoppingCart className="h-4 w-4" />
-                    CHECKOUT
+                    <ShoppingCart className="h-3.5 w-3.5" />
+                    {t("checkout")}
                   </Link>
                 </>
               ) : (
                 // Show quick add button when not in cart
                 <>
                   <button
-                    onClick={handleQuickAdd}
-                    disabled={isAdding}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium hover:bg-gray-100 transition border-r disabled:opacity-50"
+                    onClick={() => setIsQuickViewOpen(true)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] md:text-xs font-semibold tracking-wider hover:bg-gray-50 transition uppercase border-r"
                   >
-                    {isAdding ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : justAdded ? (
-                      <Check className="h-4 w-4 text-green-600" />
-                    ) : (
-                      <ShoppingBag className="h-4 w-4" />
-                    )}
-                    {isAdding ? "ADDING..." : justAdded ? "ADDED!" : "QUICK ADD"}
+                    <Eye className="h-3.5 w-3.5" />
+                    QUICK VIEW
                   </button>
                   <button
-                    onClick={() => setIsQuickViewOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium hover:bg-gray-100 transition"
+                    onClick={handleQuickAdd}
+                    disabled={isAdding}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] md:text-xs font-semibold tracking-wider hover:bg-gray-50 transition uppercase disabled:opacity-50"
                   >
-                    <Eye className="h-4 w-4" />
-                    QUICK VIEW
+                    {isAdding ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : justAdded ? (
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <ShoppingBag className="h-3.5 w-3.5" />
+                    )}
+                    {isAdding ? "ADDING" : justAdded ? "ADDED" : "QUICK ADD"}
                   </button>
                 </>
               )}
             </div>
-
-            {/* Option Selector */}
-            {secondOptionValues && secondOptionValues.length > 0 && (
-              <div className="flex justify-center gap-2 py-3 px-2 flex-wrap">
-                {secondOptionValues.map((ov) => (
-                  <button
-                    key={ov.id}
-                    onClick={() => handleOptionSelect(ov.id)}
-                    className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${selectedOptionValueId === ov.id
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-border hover:border-primary"
-                      }`}
-                  >
-                    {isArabic ? ov.valueAr : ov.valueEn}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="mt-1.5 space-y-0.5">
+        <div className="mt-3 text-center space-y-1.5 px-2">
           <Link href={`/products/${product.slug}`}>
-            <h3 className="text-[13px] font-medium line-clamp-1 hover:underline">
+            <h3 className="text-[11px] md:text-xs font-medium uppercase tracking-[0.15em] line-clamp-1 group-hover:opacity-60 transition-opacity">
               {name}
             </h3>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center gap-0.5">
             {compareAtPrice && compareAtPrice > price && (
-              <span className="text-sm text-muted-foreground line-through">
+              <span className="text-[10px] text-muted-foreground line-through tracking-wider">
                 AED {compareAtPrice.toLocaleString()}
               </span>
             )}
-            <span className="text-sm font-semibold text-red-600">
+            <span className="text-xs font-semibold tracking-widest text-black">
               AED {price.toLocaleString()}
             </span>
           </div>
-
-          {firstOptionValues && firstOptionValues.length > 0 && (
-            <div className="flex gap-1 pt-1 flex-wrap">
-              {firstOptionValues.map((ov) => {
-                const isSelected = selectedVariant?.optionValues?.some((v) => v.id === ov.id);
-                return (
-                  <button
-                    key={ov.id}
-                    className={`min-w-[24px] px-1.5 py-0.5 text-[10px] font-medium border rounded transition-transform hover:scale-105 ${isSelected
-                      ? "border-primary ring-1 ring-primary ring-offset-1 bg-primary/10"
-                      : "border-border"
-                      }`}
-                    onMouseEnter={() => handleOptionHover(ov.id)}
-                  >
-                    {isArabic ? ov.valueAr : ov.valueEn}
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
       </div>
 

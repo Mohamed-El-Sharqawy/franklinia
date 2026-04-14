@@ -43,26 +43,6 @@ export function ProductCardHorizontal({
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  // Get first option type for variant selection (e.g., Color or Size)
-  const firstOptionValues = product.variants
-    ?.flatMap((v) => v.optionValues?.[0] ? [v.optionValues[0]] : [])
-    .reduce((acc: any[], ov) => {
-      if (!acc.find((a) => a.id === ov.id)) {
-        acc.push(ov);
-      }
-      return acc;
-    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>)
-    .slice(0, 8);
-
-  const handleOptionClick = (optionValueId: string) => {
-    const variant = product.variants?.find((v) => 
-      v.optionValues?.some((ov) => ov.id === optionValueId)
-    );
-    if (variant) {
-      setSelectedVariant(variant);
-    }
-  };
-
   return (
     <>
       <div className={`flex gap-8 py-8 border-b ${isArabic ? "flex-row-reverse" : ""}`}>
@@ -83,41 +63,41 @@ export function ProductCardHorizontal({
               </div>
             )}
             {/* Badges Stack */}
-            <div className="absolute top-3 left-3 flex flex-col items-start gap-1 z-10 pointer-events-none">
+            <div className="absolute top-4 left-4 flex flex-col items-start gap-2 z-10 pointer-events-none">
               {discountPercent && (
-                <Badge variant="destructive" size="sm" className="shadow-lg border-none">
+                <Badge variant="destructive" className="shadow-lg border-none text-[10px] md:text-xs px-2 py-0.5">
                   -{discountPercent}%
                 </Badge>
               )}
 
               {product.isFeatured && (
-                <Badge variant="luxury" size="sm" className="flex gap-1.5 items-center border-none shadow-xl">
-                  <Star className="h-2.5 w-2.5 fill-[#B8860B] text-[#B8860B]" />
+                <Badge variant="luxury" className="flex gap-1.5 items-center border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
+                  <Star className="h-3 w-3 fill-[#B8860B] text-[#B8860B]" />
                   {t("featured")}
                 </Badge>
               )}
 
               {product.isTrending && (
-                <Badge variant="trending" size="sm" className="flex gap-1.5 items-center border-none shadow-md">
-                  <TrendingUp className="h-2.5 w-2.5" />
+                <Badge variant="trending" className="flex gap-1.5 items-center border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
+                  <TrendingUp className="h-3 w-3" />
                   {t("trending")}
                 </Badge>
               )}
 
               {product.badge === "NEW" && (
-                <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                <Badge variant="outline" className="border-black/5 shadow-sm text-[10px] md:text-xs px-2 py-0.5">
                   {t("badges.new")}
                 </Badge>
               )}
 
               {product.badge === "BESTSELLER" && (
-                <Badge variant="outline" size="sm" className="border-black/5 shadow-sm">
+                <Badge variant="default" className="bg-amber-600 border-none shadow-md text-[10px] md:text-xs px-2 py-0.5">
                   {t("badges.bestseller")}
                 </Badge>
               )}
 
               {product.badge === "LIMITED_EDITION" && (
-                <Badge variant="luxury" size="sm" className="bg-indigo-950 border-none shadow-xl">
+                <Badge variant="luxury" className="bg-indigo-950 border-none shadow-xl text-[10px] md:text-xs px-2 py-0.5">
                   {t("badges.limitedEdition")}
                 </Badge>
               )}
@@ -126,7 +106,7 @@ export function ProductCardHorizontal({
         </Link>
 
         {/* Product Info */}
-        <div className={`flex-1 ${isArabic ? "text-right" : ""}`}>
+        <div className={`flex-1 flex flex-col justify-center ${isArabic ? "text-right" : ""}`}>
           <Link href={`/products/${product.slug}`}>
             <h3 className="text-lg font-medium hover:underline">{name}</h3>
           </Link>
@@ -150,41 +130,25 @@ export function ProductCardHorizontal({
             </p>
           )}
 
-          {/* Variant Options */}
-          {firstOptionValues && firstOptionValues.length > 0 && (
-            <div className="flex gap-2 mt-4 flex-wrap">
-              {firstOptionValues.map((ov) => {
-                const isSelected = selectedVariant?.optionValues?.some((v) => v.id === ov.id);
-                return (
-                  <button
-                    key={ov.id}
-                    onClick={() => handleOptionClick(ov.id)}
-                    className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${isSelected
-                      ? "bg-black text-white border-black"
-                      : "border-gray-300 hover:border-black"
-                      }`}
-                  >
-                    {isArabic ? ov.valueAr : ov.valueEn}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 mt-4">
-            <button
-              className="p-2 border rounded hover:bg-gray-100 transition"
-              aria-label="Add to wishlist"
-            >
-              <Heart className="h-4 w-4" />
-            </button>
+          {/* Actions */}
+          <div className={`flex items-center gap-3 mt-auto pt-6 ${isArabic ? "flex-row-reverse" : ""}`}>
             <button
               onClick={() => setIsQuickViewOpen(true)}
-              className="p-2 border rounded hover:bg-gray-100 transition"
-              aria-label="Quick view"
+              className="flex items-center gap-2 px-6 py-2.5 bg-black text-white text-xs font-bold uppercase tracking-wider hover:bg-black/90 transition-colors"
             >
               <Eye className="h-4 w-4" />
+              QUICK VIEW
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Add favourite logic here
+              }}
+              className={`p-2.5 rounded-full border transition-colors border-gray-200 text-gray-600 hover:border-black hover:text-black`}
+              aria-label="Add to favourites"
+            >
+              <Heart className="h-4 w-4" />
             </button>
           </div>
         </div>

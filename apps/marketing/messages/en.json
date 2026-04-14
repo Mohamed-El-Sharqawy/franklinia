@@ -9,6 +9,7 @@
     "new": "New",
     "featured": "Featured",
     "trending": "Trending",
+    "checkout": "Checkout",
     "badges": {
       "new": "New",
       "bestseller": "Bestseller",
@@ -165,6 +166,9 @@
     "deliveryNotes": "Delivery Notes",
     "deliveryNotesPlaceholder": "Any special delivery instructions...",
     "comingSoon": "Coming Soon",
+    "onlinePayment": "Online Payment",
+    "onlinePaymentDesc": "Pay securely via Credit Card, Apple Pay, or Google Pay",
+    "tabby": "TABBY",
     "qty": "Qty:",
     "infoSecure": "Your information is secure",
     "haveCoupon": "Have a coupon code?",
@@ -180,6 +184,7 @@
     "exclusiveOffers": "Get exclusive coupons & offers",
     "saveAddresses": "Save addresses for faster checkout",
     "signInNow": "Sign in now",
+    "shippingAddressTitle": "Shipping Address",
     "success": {
       "title": "Order Confirmed!",
       "message": "Thank you for your purchase. Your order has been successfully processed.",
