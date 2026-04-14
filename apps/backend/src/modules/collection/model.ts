@@ -52,3 +52,15 @@ export const CollectionModel = {
 export type CollectionModel = {
   [K in keyof typeof CollectionModel]: UnwrapSchema<(typeof CollectionModel)[K]>;
 };
+
+// Query params for collection products endpoint with fashion filters
+export const collectionProductsQuery = t.Object({
+  page: t.Optional(t.Number()),
+  limit: t.Optional(t.Number()),
+  fabric: t.Optional(t.String()),
+  occasion: t.Optional(t.String()),
+  fitType: t.Optional(t.String()),
+  sleeveStyle: t.Optional(t.String()),
+});
+
+export type CollectionProductsQuery = UnwrapSchema<typeof collectionProductsQuery>;

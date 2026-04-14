@@ -1,10 +1,7 @@
 import { Collection } from "./category";
-
-export enum Gender {
-  MEN = "MEN",
-  WOMEN = "WOMEN",
-  UNISEX = "UNISEX",
-}
+import { BaseCategory, FitAdjustment, Fabric, FitType } from "./fashion-enums";
+import type { FashionAttributes } from "./fashion-attributes";
+import type { ProductOccasion } from "./occasion";
 
 export enum ProductBadge {
   NEW = "NEW",
@@ -26,25 +23,46 @@ export interface Size {
   position: number;
 }
 
-export interface Material {
+export interface ProductOption {
   id: string;
   nameEn: string;
   nameAr: string;
   position: number;
+  productId: string;
+  values: ProductOptionValue[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Stone {
+export interface ProductOptionValue {
   id: string;
-  nameEn: string;
-  nameAr: string;
+  valueEn: string;
+  valueAr: string;
+  hex?: string | null;
   position: number;
+  optionId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface Clarity {
+export enum CustomFieldType {
+  TEXT = "TEXT",
+  TEXTAREA = "TEXTAREA",
+  NUMBER = "NUMBER",
+  FILE = "FILE",
+}
+
+export interface ProductCustomField {
   id: string;
-  nameEn: string;
-  nameAr: string;
-  position: number;
+  type: CustomFieldType;
+  labelEn: string;
+  labelAr: string;
+  placeholderEn?: string | null;
+  placeholderAr?: string | null;
+  isRequired: boolean;
+  productId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Product-level image (the actual file stored in Cloudinary)
@@ -86,17 +104,15 @@ export interface ProductVariant {
   sku?: string | null;
   price: number;
   compareAtPrice?: number | null;
-  colorId?: string | null;
-  color?: Color | null;
-  sizeId?: string | null;
-  size?: Size | null;
   stock: number;
+  fitAdjustment?: FitAdjustment | null;
   isActive: boolean;
   metaTitleEn?: string | null;
   metaTitleAr?: string | null;
   metaDescriptionEn?: string | null;
   metaDescriptionAr?: string | null;
   images: VariantImageWithDetails[]; // Flattened images with position
+  optionValues: ProductOptionValue[]; // Multi-axis selection
   createdAt: Date;
   updatedAt: Date;
 }
@@ -114,25 +130,23 @@ export interface Product {
   metaTitleAr?: string | null;
   metaDescriptionEn?: string | null;
   metaDescriptionAr?: string | null;
-  gender: Gender;
+  baseCategory: BaseCategory;
   isActive: boolean;
   isFeatured: boolean;
   badge?: ProductBadge | null;
   isTrending: boolean;
   position: number;
   collectionId?: string | null;
-  materialId?: string | null;
-  stoneId?: string | null;
-  clarityId?: string | null;
-  material?: Material | null;
-  stone?: Stone | null;
-  clarity?: Clarity | null;
+  fashionAttributes?: FashionAttributes | null;
+  occasions?: ProductOccasion[];
   sizeGuideUrl?: string | null;
   defaultVariantId?: string | null;
   defaultVariant?: ProductVariant | null;
   hoverVariantId?: string | null;
   hoverVariant?: ProductVariant | null;
   variants: ProductVariant[];
+  options: ProductOption[];
+  customFields: ProductCustomField[];
   images: ProductImage[]; // Product-level images that can be shared across variants
   createdAt: Date;
   updatedAt: Date;
@@ -140,7 +154,10 @@ export interface Product {
 }
 
 export interface ProductFilters {
-  gender?: Gender;
+  fabric?: Fabric;
+  occasion?: string;
+  fitType?: FitType;
+  baseCategory?: BaseCategory;
   collectionId?: string;
   minPrice?: number;
   maxPrice?: number;

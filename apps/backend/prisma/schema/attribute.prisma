@@ -1,53 +1,38 @@
-model Material {
+model ProductOption {
   id       String @id @default(cuid())
   nameEn   String
   nameAr   String
   position Int    @default(0)
 
-  products Product[]
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  values ProductOptionValue[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([nameEn])
-  @@unique([nameAr])
-  @@index([nameEn])
-  @@index([position])
-  @@map("materials")
+  @@unique([productId, nameEn])
+  @@index([productId])
+  @@map("product_options")
 }
 
-model Stone {
-  id       String @id @default(cuid())
-  nameEn   String
-  nameAr   String
-  position Int    @default(0)
+model ProductOptionValue {
+  id       String  @id @default(cuid())
+  valueEn  String
+  valueAr  String
+  hex      String?
+  position Int     @default(0)
 
-  products Product[]
+  optionId String
+  option   ProductOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([nameEn])
-  @@unique([nameAr])
-  @@index([nameEn])
-  @@index([position])
-  @@map("stones")
-}
-
-model Clarity {
-  id       String @id @default(cuid())
-  nameEn   String
-  nameAr   String
-  position Int    @default(0)
-
-  products Product[]
+  variants ProductVariant[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([nameEn])
-  @@unique([nameAr])
-  @@index([nameEn])
-  @@index([position])
-  @@map("clarities")
+  @@unique([optionId, valueEn])
+  @@index([optionId])
+  @@map("product_option_values")
 }

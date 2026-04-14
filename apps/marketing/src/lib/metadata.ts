@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
 export const SITE_CONFIG = {
-  name: "Capella",
-  nameAr: "كابيلا",
-  domain: "capellaae.com",
-  url: process.env.NEXT_PUBLIC_SITE_URL || "https://capellaae.com",
+  name: "Franklinia",
+  nameAr: "فرانكلينيا",
+  domain: "franklinia.com",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://franklinia.com",
   defaultImage: "/og-image.jpg",
-  twitterHandle: "@capellaae",
+  twitterHandle: "@franklinia",
   locale: {
     en: "en_US",
     ar: "ar_EG",
@@ -15,9 +15,9 @@ export const SITE_CONFIG = {
 
 export const DEFAULT_METADATA = {
   en: {
-    title: "Capella - Premium Fashion & Clothing",
+    title: "Franklinia - Premium Fashion & Clothing",
     description:
-      "Discover the latest trends in fashion at Capella. Shop premium quality clothing, accessories, and more with fast delivery across UAE.",
+      "Discover the latest trends in fashion at Franklinia. Shop premium quality clothing, accessories, and more with fast delivery across UAE.",
     keywords: [
       "fashion",
       "clothing",
@@ -28,13 +28,13 @@ export const DEFAULT_METADATA = {
       "men fashion",
       "women fashion",
       "accessories",
-      "Capella",
+      "Franklinia",
     ],
   },
   ar: {
-    title: "إن زد إن ستوديو - أزياء وملابس فاخرة",
+    title: "فرانكلينيا - أزياء وملابس فاخرة",
     description:
-      "اكتشف أحدث صيحات الموضة في كابيلا. تسوق ملابس عالية الجودة وإكسسوارات والمزيد مع توصيل سريع في جميع أنحاء الإمارات.",
+      "اكتشف أحدث صيحات الموضة في فرانكلينيا. تسوق ملابس عالية الجودة وإكسسوارات والمزيد مع توصيل سريع في جميع أنحاء الإمارات.",
     keywords: [
       "أزياء",
       "ملابس",
@@ -45,7 +45,7 @@ export const DEFAULT_METADATA = {
       "أزياء رجالية",
       "أزياء نسائية",
       "إكسسوارات",
-      "إن زد إن ستوديو",
+      "فرانكلينيا",
     ],
   },
 } as const;
@@ -166,8 +166,8 @@ export function generateProductMetadata({
     : product.metaTitleEn || product.nameEn;
 
   const description = isArabic
-    ? product.metaDescriptionAr || product.shortDescriptionAr || `${product.nameAr} - تسوق الآن من إن زد إن ستوديو`
-    : product.metaDescriptionEn || product.shortDescriptionEn || `${product.nameEn} - Shop now at Capella`;
+    ? product.metaDescriptionAr || product.shortDescriptionAr || `${product.nameAr} - تسوق الآن من فرانكلينيا`
+    : product.metaDescriptionEn || product.shortDescriptionEn || `${product.nameEn} - Shop now at Franklinia`;
 
   const image = product.variants?.[0]?.images?.[0]?.url;
   const path = `/products/${product.slug}`;
@@ -216,7 +216,7 @@ export function generateCollectionMetadata({
 
   const description = isArabic
     ? collection.metaDescriptionAr || collection.descriptionAr || `تسوق مجموعة ${collection.nameAr} من إن زد إن ستوديو`
-    : collection.metaDescriptionEn || collection.descriptionEn || `Shop ${collection.nameEn} collection at Capella`;
+    : collection.metaDescriptionEn || collection.descriptionEn || `Shop ${collection.nameEn} collection at Franklinia`;
 
   const image = collection.image?.url;
   const path = `/collections/${collection.slug}`;
@@ -239,98 +239,98 @@ export function generateCollectionMetadata({
 export const STATIC_PAGE_METADATA = {
   home: {
     en: {
-      title: "Capella - Premium Fashion & Clothing Store",
+      title: "Franklinia - Premium Fashion & Clothing Store",
       description:
-        "Discover the latest fashion trends at Capella. Shop premium quality clothing for men and women with fast delivery across UAE. New arrivals weekly!",
+        "Discover the latest fashion trends at Franklinia. Shop premium quality clothing for men and women with fast delivery across UAE. New arrivals weekly!",
     },
     ar: {
-      title: "إن زد إن ستوديو - متجر أزياء وملابس فاخرة",
+      title: "فرانكلينيا - متجر أزياء وملابس فاخرة",
       description:
-        "اكتشف أحدث صيحات الموضة في كابيلا. تسوق ملابس عالية الجودة للرجال والنساء مع توصيل سريع في جميع أنحاء الإمارات. وصول جديد أسبوعياً!",
+        "اكتشف أحدث صيحات الموضة في فرانكلينيا. تسوق ملابس عالية الجودة للرجال والنساء مع توصيل سريع في جميع أنحاء الإمارات. وصول جديد أسبوعياً!",
     },
   },
   collections: {
     en: {
-      title: "Shop All Collections - Capella",
+      title: "Shop All Collections - Franklinia",
       description:
-        "Browse our curated fashion collections. From casual wear to formal attire, find your perfect style at Capella.",
+        "Browse our curated fashion collections. From casual wear to formal attire, find your perfect style at Franklinia.",
     },
     ar: {
-      title: "تسوق جميع المجموعات - إن زد إن ستوديو",
+      title: "تسوق جميع المجموعات - فرانكلينيا",
       description:
-        "تصفح مجموعاتنا المختارة من الأزياء. من الملابس الكاجوال إلى الرسمية، اعثر على أسلوبك المثالي في إن زد إن ستوديو.",
+        "تصفح مجموعاتنا المختارة من الأزياء. من الملابس الكاجوال إلى الرسمية، اعثر على أسلوبك المثالي في فرانكلينيا.",
     },
   },
   contact: {
     en: {
-      title: "Contact Us - Capella Customer Support",
+      title: "Contact Us - Franklinia Customer Support",
       description:
-        "Get in touch with Capella. We're here to help with orders, returns, sizing questions, and more. Fast response guaranteed.",
+        "Get in touch with Franklinia. We're here to help with orders, returns, sizing questions, and more. Fast response guaranteed.",
     },
     ar: {
-      title: "تواصل معنا - دعم عملاء إن زد إن ستوديو",
+      title: "تواصل معنا - دعم عملاء فرانكلينيا",
       description:
-        "تواصل مع إن زد إن ستوديو. نحن هنا للمساعدة في الطلبات والإرجاع وأسئلة المقاسات والمزيد. استجابة سريعة مضمونة.",
+        "تواصل مع فرانكلينيا. نحن هنا للمساعدة في الطلبات والإرجاع وأسئلة المقاسات والمزيد. استجابة سريعة مضمونة.",
     },
   },
   privacyPolicy: {
     en: {
-      title: "Privacy Policy - Capella",
+      title: "Privacy Policy - Franklinia",
       description:
-        "Learn how Capella protects your personal data. Our privacy policy explains data collection, usage, and your rights.",
+        "Learn how Franklinia protects your personal data. Our privacy policy explains data collection, usage, and your rights.",
     },
     ar: {
-      title: "سياسة الخصوصية - إن زد إن ستوديو",
+      title: "سياسة الخصوصية - فرانكلينيا",
       description:
-        "تعرف على كيفية حماية إن زد إن ستوديو لبياناتك الشخصية. توضح سياسة الخصوصية لدينا جمع البيانات واستخدامها وحقوقك.",
+        "تعرف على كيفية حماية فرانكلينيا لبياناتك الشخصية. توضح سياسة الخصوصية لدينا جمع البيانات واستخدامها وحقوقك.",
     },
   },
   termsOfService: {
     en: {
-      title: "Terms of Service - Capella",
+      title: "Terms of Service - Franklinia",
       description:
-        "Read Capella's terms of service. Understand your rights and responsibilities when shopping with us.",
+        "Read Franklinia's terms of service. Understand your rights and responsibilities when shopping with us.",
     },
     ar: {
-      title: "شروط الخدمة - إن زد إن ستوديو",
+      title: "شروط الخدمة - فرانكلينيا",
       description:
-        "اقرأ شروط خدمة إن زد إن ستوديو. افهم حقوقك ومسؤولياتك عند التسوق معنا.",
+        "اقرأ شروط خدمة فرانكلينيا. افهم حقوقك ومسؤولياتك عند التسوق معنا.",
     },
   },
   refundPolicy: {
     en: {
-      title: "Refund Policy - Capella",
+      title: "Refund Policy - Franklinia",
       description:
-        "Capella refund policy. Learn about our hassle-free refund process, eligibility, and timeline for getting your money back.",
+        "Franklinia refund policy. Learn about our hassle-free refund process, eligibility, and timeline for getting your money back.",
     },
     ar: {
-      title: "سياسة الاسترداد - إن زد إن ستوديو",
+      title: "سياسة الاسترداد - فرانكلينيا",
       description:
-        "سياسة استرداد إن زد إن ستوديو. تعرف على عملية الاسترداد السهلة والأهلية والجدول الزمني لاسترداد أموالك.",
+        "سياسة استرداد فرانكلينيا. تعرف على عملية الاسترداد السهلة والأهلية والجدول الزمني لاسترداد أموالك.",
     },
   },
   returnPolicy: {
     en: {
-      title: "Return Policy - Capella",
+      title: "Return Policy - Franklinia",
       description:
-        "Easy returns at Capella. 14-day return window, simple process, and full refund on eligible items. Shop with confidence.",
+        "Easy returns at Franklinia. 14-day return window, simple process, and full refund on eligible items. Shop with confidence.",
     },
     ar: {
-      title: "سياسة الإرجاع - إن زد إن ستوديو",
+      title: "سياسة الإرجاع - فرانكلينيا",
       description:
-        "إرجاع سهل في إن زد إن ستوديو. فترة إرجاع 14 يومًا، عملية بسيطة، واسترداد كامل للمنتجات المؤهلة. تسوق بثقة.",
+        "إرجاع سهل في فرانكلينيا. فترة إرجاع 14 يومًا، عملية بسيطة، واسترداد كامل للمنتجات المؤهلة. تسوق بثقة.",
     },
   },
   shippingPolicy: {
     en: {
-      title: "Shipping Policy - Capella",
+      title: "Shipping Policy - Franklinia",
       description:
-        "Fast shipping across UAE. Free delivery on orders over 500 AED. Track your order and get updates. Capella delivery info.",
+        "Fast shipping across UAE. Free delivery on orders over 500 AED. Track your order and get updates. Franklinia delivery info.",
     },
     ar: {
-      title: "سياسة الشحن - كابيلا",
+      title: "سياسة الشحن - فرانكلينيا",
       description:
-        "شحن سريع في جميع أنحاء الإمارات. توصيل مجاني للطلبات فوق 500 درهم. تتبع طلبك واحصل على التحديثات. معلومات توصيل كابيلا.",
+        "شحن سريع في جميع أنحاء الإمارات. توصيل مجاني للطلبات فوق 500 درهم. تتبع طلبك واحصل على التحديثات. معلومات توصيل فرانكلينيا.",
     },
   },
 } as const;

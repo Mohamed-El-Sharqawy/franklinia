@@ -12,16 +12,54 @@ export const ProductModel = {
     metaTitleAr: t.Optional(t.String()),
     metaDescriptionEn: t.Optional(t.String()),
     metaDescriptionAr: t.Optional(t.String()),
-    gender: t.Union([t.Literal("MEN"), t.Literal("WOMEN"), t.Literal("UNISEX")]),
+    baseCategory: t.Union([t.Literal("ABAYA"), t.Literal("MODEST_DRESS")]),
     collectionId: t.Optional(t.String()),
     isActive: t.Optional(t.Boolean()),
     isFeatured: t.Optional(t.Boolean()),
     badge: t.Optional(t.Union([t.Literal("NEW"), t.Literal("BESTSELLER"), t.Literal("LIMITED_EDITION"), t.Null()])),
     isTrending: t.Optional(t.Boolean()),
     position: t.Optional(t.Number({ minimum: 0 })),
-    materialId: t.Optional(t.Union([t.String(), t.Null()])),
-    stoneId: t.Optional(t.Union([t.String(), t.Null()])),
-    clarityId: t.Optional(t.Union([t.String(), t.Null()])),
+    fashionAttributes: t.Optional(
+      t.Object({
+        fabric: t.String(),
+        embellishment: t.Optional(t.String()),
+        sleeveStyle: t.String(),
+        fitType: t.String(),
+        transparencyLayer: t.String(),
+        neckline: t.Optional(t.Union([t.String(), t.Null()])),
+        length: t.Optional(t.Union([t.String(), t.Null()])),
+      })
+    ),
+    occasionIds: t.Optional(t.Array(t.String())),
+    occasionPositions: t.Optional(t.Record(t.String(), t.Number())),
+    options: t.Optional(
+      t.Array(
+        t.Object({
+          nameEn: t.String(),
+          nameAr: t.String(),
+          position: t.Optional(t.Number()),
+          values: t.Array(
+            t.Object({
+              valueEn: t.String(),
+              valueAr: t.String(),
+              position: t.Optional(t.Number()),
+            })
+          ),
+        })
+      )
+    ),
+    customFields: t.Optional(
+      t.Array(
+        t.Object({
+          type: t.Union([t.Literal("TEXT"), t.Literal("TEXTAREA"), t.Literal("NUMBER"), t.Literal("FILE")]),
+          labelEn: t.String(),
+          labelAr: t.String(),
+          placeholderEn: t.Optional(t.String()),
+          placeholderAr: t.Optional(t.String()),
+          isRequired: t.Optional(t.Boolean()),
+        })
+      )
+    ),
     variants: t.Optional(
       t.Array(
         t.Object({
@@ -32,6 +70,8 @@ export const ProductModel = {
           compareAtPrice: t.Optional(t.Number({ minimum: 0 })),
           stock: t.Optional(t.Number({ minimum: 0 })),
           isActive: t.Optional(t.Boolean()),
+          optionValueIds: t.Optional(t.Array(t.String())),
+          fitAdjustment: t.Optional(t.Union([t.Literal("LOOSE"), t.Literal("RELAXED"), t.Literal("STRUCTURED"), t.Null()])),
         })
       )
     ),
@@ -47,18 +87,56 @@ export const ProductModel = {
     metaTitleAr: t.Optional(t.String()),
     metaDescriptionEn: t.Optional(t.String()),
     metaDescriptionAr: t.Optional(t.String()),
-    gender: t.Optional(t.Union([t.Literal("MEN"), t.Literal("WOMEN"), t.Literal("UNISEX")])),
+    baseCategory: t.Optional(t.Union([t.Literal("ABAYA"), t.Literal("MODEST_DRESS")])),
     collectionId: t.Optional(t.Union([t.String(), t.Null()])),
     isActive: t.Optional(t.Boolean()),
     isFeatured: t.Optional(t.Boolean()),
     badge: t.Optional(t.Union([t.Literal("NEW"), t.Literal("BESTSELLER"), t.Literal("LIMITED_EDITION"), t.Null()])),
     isTrending: t.Optional(t.Boolean()),
     position: t.Optional(t.Number({ minimum: 0 })),
-    materialId: t.Optional(t.Union([t.String(), t.Null()])),
-    stoneId: t.Optional(t.Union([t.String(), t.Null()])),
-    clarityId: t.Optional(t.Union([t.String(), t.Null()])),
+    fashionAttributes: t.Optional(
+      t.Object({
+        fabric: t.String(),
+        embellishment: t.Optional(t.String()),
+        sleeveStyle: t.String(),
+        fitType: t.String(),
+        transparencyLayer: t.String(),
+        neckline: t.Optional(t.Union([t.String(), t.Null()])),
+        length: t.Optional(t.Union([t.String(), t.Null()])),
+      })
+    ),
+    occasionIds: t.Optional(t.Array(t.String())),
+    occasionPositions: t.Optional(t.Record(t.String(), t.Number())),
     defaultVariantId: t.Optional(t.Union([t.String(), t.Null()])),
     hoverVariantId: t.Optional(t.Union([t.String(), t.Null()])),
+    options: t.Optional(
+      t.Array(
+        t.Object({
+          nameEn: t.String(),
+          nameAr: t.String(),
+          position: t.Optional(t.Number()),
+          values: t.Array(
+            t.Object({
+              valueEn: t.String(),
+              valueAr: t.String(),
+              position: t.Optional(t.Number()),
+            })
+          ),
+        })
+      )
+    ),
+    customFields: t.Optional(
+      t.Array(
+        t.Object({
+          type: t.Union([t.Literal("TEXT"), t.Literal("TEXTAREA"), t.Literal("NUMBER"), t.Literal("FILE")]),
+          labelEn: t.String(),
+          labelAr: t.String(),
+          placeholderEn: t.Optional(t.String()),
+          placeholderAr: t.Optional(t.String()),
+          isRequired: t.Optional(t.Boolean()),
+        })
+      )
+    ),
   }),
   createVariantBody: t.Object({
     nameEn: t.String({ minLength: 1 }),
@@ -89,7 +167,10 @@ export const ProductModel = {
   listQuery: t.Object({
     page: t.Optional(t.String()),
     limit: t.Optional(t.String()),
-    gender: t.Optional(t.String()),
+    baseCategory: t.Optional(t.String()),
+    fabric: t.Optional(t.String()),
+    occasion: t.Optional(t.String()),
+    fitType: t.Optional(t.String()),
     collectionId: t.Optional(t.String()),
     collectionSlug: t.Optional(t.String()),
     isActive: t.Optional(t.String()),

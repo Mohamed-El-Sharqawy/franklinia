@@ -40,9 +40,8 @@ export abstract class SearchService {
           nameEn: true,
           nameAr: true,
           badge: true,
-          material: { select: { id: true, nameEn: true, nameAr: true } },
-          stone: { select: { id: true, nameEn: true, nameAr: true } },
-          clarity: { select: { id: true, nameEn: true, nameAr: true } },
+          baseCategory: true,
+          fashionAttributes: { select: { fabric: true, sleeveStyle: true, fitType: true } },
           variants: {
             where: { isActive: true },
             take: 1,
@@ -94,9 +93,8 @@ export abstract class SearchService {
       price: p.variants[0]?.price ?? null,
       imageUrl: p.variants[0]?.images[0]?.image?.url ?? null,
       badge: p.badge,
-      material: p.material,
-      stone: p.stone,
-      clarity: p.clarity,
+      baseCategory: p.baseCategory,
+      fashionAttributes: p.fashionAttributes,
     }));
 
     // Transform collections to include image URL
@@ -164,8 +162,8 @@ export abstract class SearchService {
         nameEn: true,
         nameAr: true,
         badge: true,
-        material: { select: { id: true, nameEn: true, nameAr: true } },
-        stone: { select: { id: true, nameEn: true, nameAr: true } },
+        baseCategory: true,
+        fashionAttributes: { select: { fabric: true, sleeveStyle: true, fitType: true } },
         variants: {
           where: { isActive: true },
           take: 1,
@@ -197,8 +195,8 @@ export abstract class SearchService {
           nameEn: true,
           nameAr: true,
           badge: true,
-          material: { select: { id: true, nameEn: true, nameAr: true } },
-          stone: { select: { id: true, nameEn: true, nameAr: true } },
+          baseCategory: true,
+          fashionAttributes: { select: { fabric: true, sleeveStyle: true, fitType: true } },
           variants: {
             where: { isActive: true },
             take: 1,
@@ -228,8 +226,8 @@ export abstract class SearchService {
       price: p.variants[0]?.price ?? null,
       imageUrl: p.variants[0]?.images[0]?.image?.url ?? null,
       badge: p.badge,
-      material: p.material,
-      stone: p.stone,
+      baseCategory: p.baseCategory,
+      fashionAttributes: p.fashionAttributes,
     }));
   }
 

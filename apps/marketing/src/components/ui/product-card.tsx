@@ -37,9 +37,15 @@ export function ProductCard({ product, locale }: ProductCardProps) {
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  const colors = product.variants
-    ?.map((v) => v.color?.hex)
-    .filter((c, i, arr) => c && arr.indexOf(c) === i)
+  // Get first option values for display
+  const firstOptionValues = product.variants
+    ?.flatMap((v) => v.optionValues?.[0] ? [v.optionValues[0]] : [])
+    .reduce((acc: any[], ov) => {
+      if (!acc.find((a) => a.id === ov.id)) {
+        acc.push(ov);
+      }
+      return acc;
+    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>)
     .slice(0, 6);
 
 

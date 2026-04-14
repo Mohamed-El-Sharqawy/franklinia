@@ -25,7 +25,7 @@ export function Header({ locale }: { locale: string }) {
 
         {/* Center: Logo */}
         <Link href="/" className="absolute left-1/2 -translate-x-1/2 text-xl sm:text-2xl md:text-3xl font-light uppercase tracking-[0.3em] whitespace-nowrap hover:opacity-80 transition-opacity">
-          <Image src={"/logo_capella.webp"} alt="Capella's Brand Logo" width={200} height={200} />
+          <Image src={"/logo_franklinia.webp"} alt="Franklinia Brand Logo" width={200} height={200} />
         </Link>
 
         {/* Right: Actions */}

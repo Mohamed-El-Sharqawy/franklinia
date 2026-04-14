@@ -6,7 +6,6 @@ import { Link } from "@/i18n/navigation";
 import { Heart, Eye } from "lucide-react";
 import type { Product, ProductVariant } from "@ecommerce/shared-types";
 import { useCart } from "@/contexts/cart-context";
-import { createCartItemFromVariant } from "@/lib/cart";
 import { QuickViewModal } from "./quick-view-modal";
 import { useTranslations } from "next-intl";
 import { Badge } from "./badge";
@@ -28,7 +27,6 @@ export function ProductCardHorizontal({
     product.variants?.[0] ?? null
   );
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null);
 
   const isArabic = locale === "ar";
   const name = isArabic ? product.nameAr : product.nameEn;
@@ -45,37 +43,24 @@ export function ProductCardHorizontal({
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  // Get unique colors from variants
-  const uniqueColors = product.variants
-    ?.filter((v) => v.color)
-    .reduce((acc, v) => {
-      if (v.color && !acc.find((c) => c.id === v.color!.id)) {
-        acc.push({ ...v.color, variantId: v.id });
+  // Get first option type for variant selection (e.g., Color or Size)
+  const firstOptionValues = product.variants
+    ?.flatMap((v) => v.optionValues?.[0] ? [v.optionValues[0]] : [])
+    .reduce((acc: any[], ov) => {
+      if (!acc.find((a) => a.id === ov.id)) {
+        acc.push(ov);
       }
       return acc;
-    }, [] as Array<{ id: string; hex: string; nameEn: string; nameAr: string; variantId: string }>)
+    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>)
     .slice(0, 8);
 
-  // Get unique sizes from variants
-  const uniqueSizes = product.variants
-    ?.filter((v) => v.size)
-    .reduce((acc, v) => {
-      if (v.size && !acc.find((s) => s.id === v.size!.id)) {
-        acc.push({ ...v.size, variantId: v.id });
-      }
-      return acc;
-    }, [] as Array<{ id: string; nameEn: string; nameAr: string; position: number; variantId: string }>)
-    .sort((a, b) => a.position - b.position);
-
-  const handleColorClick = (colorId: string) => {
-    const variant = product.variants?.find((v) => v.color?.id === colorId);
+  const handleOptionClick = (optionValueId: string) => {
+    const variant = product.variants?.find((v) => 
+      v.optionValues?.some((ov) => ov.id === optionValueId)
+    );
     if (variant) {
       setSelectedVariant(variant);
     }
-  };
-
-  const handleSizeSelect = (sizeId: string) => {
-    setSelectedSizeId(sizeId === selectedSizeId ? null : sizeId);
   };
 
   return (
@@ -165,39 +150,24 @@ export function ProductCardHorizontal({
             </p>
           )}
 
-          {/* Colors */}
-          {uniqueColors && uniqueColors.length > 0 && (
-            <div className="flex gap-2 mt-4">
-              {uniqueColors.map((color) => (
-                <button
-                  key={color.id}
-                  onClick={() => handleColorClick(color.id)}
-                  className={`h-6 w-6 rounded-full border-2 transition-transform hover:scale-110 ${selectedVariant?.color?.id === color.id
-                    ? "border-black ring-1 ring-black ring-offset-1"
-                    : "border-gray-300"
-                    }`}
-                  style={{ backgroundColor: color.hex }}
-                  aria-label={isArabic ? color.nameAr : color.nameEn}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Sizes */}
-          {uniqueSizes && uniqueSizes.length > 0 && (
-            <div className="flex gap-2 mt-4">
-              {uniqueSizes.map((size) => (
-                <button
-                  key={size.id}
-                  onClick={() => handleSizeSelect(size.id)}
-                  className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${selectedSizeId === size.id
-                    ? "bg-black text-white border-black"
-                    : "border-gray-300 hover:border-black"
-                    }`}
-                >
-                  {isArabic ? size.nameAr : size.nameEn}
-                </button>
-              ))}
+          {/* Variant Options */}
+          {firstOptionValues && firstOptionValues.length > 0 && (
+            <div className="flex gap-2 mt-4 flex-wrap">
+              {firstOptionValues.map((ov) => {
+                const isSelected = selectedVariant?.optionValues?.some((v) => v.id === ov.id);
+                return (
+                  <button
+                    key={ov.id}
+                    onClick={() => handleOptionClick(ov.id)}
+                    className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${isSelected
+                      ? "bg-black text-white border-black"
+                      : "border-gray-300 hover:border-black"
+                      }`}
+                  >
+                    {isArabic ? ov.valueAr : ov.valueEn}
+                  </button>
+                );
+              })}
             </div>
           )}
 

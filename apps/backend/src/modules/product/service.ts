@@ -10,6 +10,7 @@ const VARIANT_WITH_IMAGES = {
       orderBy: { position: "asc" as const },
       include: { image: true },
     },
+    optionValues: true, // Multi-axis selection
   },
 } as const;
 
@@ -22,9 +23,16 @@ const PRODUCT_INCLUDE = {
   hoverVariant: VARIANT_WITH_IMAGES,
   collection: true,
   images: true, // Product-level images
-  material: true,
-  stone: true,
-  clarity: true,
+  options: {
+    include: { values: { orderBy: { position: "asc" as const } } },
+    orderBy: { position: "asc" as const },
+  },
+  customFields: true,
+  fashionAttributes: true,
+  occasions: {
+    include: { occasion: true },
+    orderBy: { position: 'asc' as const },
+  },
 } as const;
 
 // Helper to flatten variant images for frontend
@@ -75,7 +83,10 @@ export abstract class ProductService {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {};
-    if (query.gender) where.gender = query.gender;
+    if (query.baseCategory) where.baseCategory = query.baseCategory;
+    if (query.fabric) where.fashionAttributes = { fabric: query.fabric };
+    if (query.fitType) where.fashionAttributes = { ...(where.fashionAttributes as object), fitType: query.fitType };
+    if (query.occasion) where.occasions = { some: { occasion: { slug: query.occasion } } };
     
     // Support both collectionId and collectionSlug for better SEO
     // When selecting a parent collection, also include products from child collections
@@ -211,35 +222,178 @@ export abstract class ProductService {
     const existingSlug = await prisma.product.findUnique({ where: { slug } });
     const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
 
-    const { variants, ...productData } = body;
+    const { variants, options, customFields, fashionAttributes, occasionIds, occasionPositions, ...productData } = body;
+
+    // Activation validation: active products require complete fashion attributes and at least one occasion
+    if (productData.isActive) {
+      const missingFields: string[] = [];
+      if (!fashionAttributes) {
+        missingFields.push("fashionAttributes (required: fabric, sleeveStyle, fitType, transparencyLayer)");
+      } else {
+        if (!fashionAttributes.fabric) missingFields.push("fashionAttributes.fabric");
+        if (!fashionAttributes.sleeveStyle) missingFields.push("fashionAttributes.sleeveStyle");
+        if (!fashionAttributes.fitType) missingFields.push("fashionAttributes.fitType");
+        if (!fashionAttributes.transparencyLayer) missingFields.push("fashionAttributes.transparencyLayer");
+      }
+      if (!occasionIds || occasionIds.length === 0) {
+        missingFields.push("occasionIds (at least 1 occasion required)");
+      }
+      if (missingFields.length > 0) {
+        return { ok: false as const, error: `Cannot activate product. Missing: ${missingFields.join(", ")}`, status: 400 };
+      }
+    }
 
     const product = await prisma.product.create({
       data: {
         ...productData,
         slug: finalSlug,
+        options: options
+          ? {
+              create: options.map((opt) => ({
+                nameEn: opt.nameEn,
+                nameAr: opt.nameAr,
+                position: opt.position ?? 0,
+                values: {
+                  create: opt.values.map((v) => ({
+                    valueEn: v.valueEn,
+                    valueAr: v.valueAr,
+                    position: v.position ?? 0,
+                  })),
+                },
+              })),
+            }
+          : undefined,
+        customFields: customFields
+          ? {
+              create: customFields.map((field) => ({
+                ...field,
+              })),
+            }
+          : undefined,
+        fashionAttributes: fashionAttributes
+          ? {
+              create: {
+                fabric: fashionAttributes.fabric as any,
+                embellishment: (fashionAttributes.embellishment as any) ?? 'NONE',
+                sleeveStyle: fashionAttributes.sleeveStyle as any,
+                fitType: fashionAttributes.fitType as any,
+                transparencyLayer: fashionAttributes.transparencyLayer as any,
+                neckline: fashionAttributes.neckline as any,
+                length: fashionAttributes.length as any,
+              },
+            }
+          : undefined,
+        occasions: occasionIds
+          ? {
+              create: occasionIds.map((id: string, i: number) => ({
+                occasionId: id,
+                position: (occasionPositions as Record<string, number>)?.[id] ?? i,
+              })),
+            }
+          : undefined,
         variants: variants
           ? {
-              create: variants.map((v) => ({
-                ...v,
-                slug: slugify(`${body.nameEn}-${v.nameEn}-${Date.now()}`),
-                stock: v.stock ?? 0,
-              })),
+              create: variants.map((v) => {
+                const { optionValueIds, fitAdjustment, ...variantData } = v;
+                return {
+                  ...variantData,
+                  fitAdjustment: fitAdjustment as any,
+                  slug: slugify(`${body.nameEn}-${v.nameEn}-${Date.now()}`),
+                  stock: v.stock ?? 0,
+                  optionValues: optionValueIds
+                    ? {
+                        connect: optionValueIds.map((id) => ({ id })),
+                      }
+                    : undefined,
+                };
+              }),
             }
           : undefined,
       },
       include: PRODUCT_INCLUDE,
     });
 
-    return transformProduct(product);
+    return { ok: true as const, data: transformProduct(product) };
   }
 
   static async update(id: string, body: ProductModel["updateBody"]) {
-    const existing = await prisma.product.findUnique({ where: { id } });
+    const existing = await prisma.product.findUnique({
+      where: { id },
+      include: { fashionAttributes: true, occasions: true },
+    });
     if (!existing) return null;
 
-    const updateData: Record<string, unknown> = { ...body };
+    const { fashionAttributes, occasionIds, occasionPositions, ...restBody } = body;
+    const updateData: Record<string, unknown> = { ...restBody };
     if (body.nameEn) {
       updateData.slug = slugify(body.nameEn);
+    }
+
+    // Activation validation: if trying to activate, require complete fashion attributes and at least one occasion
+    const willBeActive = restBody.isActive === true || (restBody.isActive === undefined && existing.isActive);
+    if (willBeActive) {
+      const missingFields: string[] = [];
+      const attrs = fashionAttributes ?? existing.fashionAttributes;
+      if (!attrs) {
+        missingFields.push("fashionAttributes (required: fabric, sleeveStyle, fitType, transparencyLayer)");
+      } else {
+        const a = attrs as any;
+        if (!a.fabric) missingFields.push("fashionAttributes.fabric");
+        if (!a.sleeveStyle) missingFields.push("fashionAttributes.sleeveStyle");
+        if (!a.fitType) missingFields.push("fashionAttributes.fitType");
+        if (!a.transparencyLayer) missingFields.push("fashionAttributes.transparencyLayer");
+      }
+      const hasOccasions = occasionIds ? occasionIds.length > 0 : existing.occasions.length > 0;
+      if (!hasOccasions) {
+        missingFields.push("occasionIds (at least 1 occasion required)");
+      }
+      if (missingFields.length > 0) {
+        return { ok: false as const, error: `Cannot activate product. Missing: ${missingFields.join(", ")}`, status: 400 };
+      }
+    }
+
+    // Update fashionAttributes if provided
+    if (fashionAttributes) {
+      const existingAttrs = await prisma.fashionAttributes.findUnique({ where: { productId: id } });
+      if (existingAttrs) {
+        await prisma.fashionAttributes.update({
+          where: { productId: id },
+          data: {
+            fabric: fashionAttributes.fabric as any,
+            embellishment: (fashionAttributes.embellishment as any) ?? 'NONE',
+            sleeveStyle: fashionAttributes.sleeveStyle as any,
+            fitType: fashionAttributes.fitType as any,
+            transparencyLayer: fashionAttributes.transparencyLayer as any,
+            neckline: fashionAttributes.neckline as any,
+            length: fashionAttributes.length as any,
+          },
+        });
+      } else {
+        await prisma.fashionAttributes.create({
+          data: {
+            productId: id,
+            fabric: fashionAttributes.fabric as any,
+            embellishment: (fashionAttributes.embellishment as any) ?? 'NONE',
+            sleeveStyle: fashionAttributes.sleeveStyle as any,
+            fitType: fashionAttributes.fitType as any,
+            transparencyLayer: fashionAttributes.transparencyLayer as any,
+            neckline: fashionAttributes.neckline as any,
+            length: fashionAttributes.length as any,
+          },
+        });
+      }
+    }
+
+    // Update occasions if provided
+    if (occasionIds) {
+      await prisma.productOccasion.deleteMany({ where: { productId: id } });
+      await prisma.productOccasion.createMany({
+        data: occasionIds.map((oid: string, i: number) => ({
+          productId: id,
+          occasionId: oid,
+          position: (occasionPositions as Record<string, number>)?.[oid] ?? i,
+        })),
+      });
     }
 
     const product = await prisma.product.update({
@@ -247,7 +401,7 @@ export abstract class ProductService {
       data: updateData,
       include: PRODUCT_INCLUDE,
     });
-    return transformProduct(product);
+    return { ok: true as const, data: transformProduct(product) };
   }
 
   static async delete(id: string) {

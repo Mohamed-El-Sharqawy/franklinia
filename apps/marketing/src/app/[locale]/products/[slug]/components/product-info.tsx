@@ -8,7 +8,10 @@ import {
 import { useTranslations } from "next-intl";
 import type { Product, ProductVariant } from "@ecommerce/shared-types";
 import { Accordion, AccordionItem, Checkbox, SocialShare } from "@/components/ui";
-import type { UniqueColor, UniqueSize, SizeAvailability } from "../types";
+import { KeyFeatures } from "@/components/fashion-attributes/KeyFeatures";
+import { OccasionBadgeList } from "@/components/occasion/OccasionBadgeList";
+import { LayeringNotice } from "@/components/fashion-attributes/LayeringNotice";
+import { fitAdjustmentLabels } from "@ecommerce/shared-utils";
 import { useState } from "react";
 
 interface CartItemInfo {
@@ -24,13 +27,11 @@ interface ProductInfoProps {
   discountPercent: number | null;
   reviewCount: number;
   locale: string;
-  // Variant selection
-  uniqueColors: UniqueColor[];
-  uniqueSizes: UniqueSize[];
+  // Variant selection (Dynamic)
+  selectedOptions: Record<string, string>;
   selectedVariant: ProductVariant | null;
-  onColorSelect: (colorId: string) => void;
-  onSizeSelect: (sizeId: string) => void;
-  getSizeAvailability: (sizeId: string) => SizeAvailability;
+  onOptionSelect: (optionId: string, valueId: string) => void;
+  isOptionValueDisabled: (optionId: string, valueId: string) => boolean;
   hasSizeGuide: boolean;
   onOpenSizeGuide: () => void;
   // Quantity
@@ -55,30 +56,37 @@ export function ProductInfo({
   price,
   compareAtPrice,
   discountPercent,
+  reviewCount,
   locale,
-  uniqueColors,
-  uniqueSizes,
+  selectedOptions,
   selectedVariant,
-  onColorSelect,
-  onSizeSelect,
-  getSizeAvailability,
+  onOptionSelect,
+  isOptionValueDisabled,
   hasSizeGuide,
   onOpenSizeGuide,
+  quantity,
+  onIncrement,
+  onDecrement,
   onAddToCart,
   onBuyNow,
   isFavourite,
   isInWishlist,
   onToggleFavourite,
   onToggleWishlist,
+  cartItem,
+  onUpdateCartQuantity,
 }: ProductInfoProps) {
   const t = useTranslations("product");
   const isArabic = locale === "ar";
   const [addGiftMessage, setAddGiftMessage] = useState(false);
 
   const composition = [
-    product.material?.[isArabic ? 'nameAr' : 'nameEn'],
-    product.stone?.[isArabic ? 'nameAr' : 'nameEn'],
-    product.clarity?.[isArabic ? 'nameAr' : 'nameEn']
+    (product as any).fashionAttributes?.fabric,
+    (product as any).fashionAttributes?.embellishment && (product as any).fashionAttributes?.embellishment !== 'NONE' 
+      ? (product as any).fashionAttributes?.embellishment 
+      : null,
+    (product as any).fashionAttributes?.sleeveStyle,
+    (product as any).fashionAttributes?.fitType,
   ].filter(Boolean).join(', ');
 
   const benefits = [
@@ -94,13 +102,25 @@ export function ProductInfo({
       {/* Title & Price */}
       <div className="space-y-3">
         <h1 className="text-xl md:text-2xl font-medium tracking-tight text-gray-900">{name}</h1>
+        {/* Occasion Badges */}
+        {(product as any).occasions && (product as any).occasions.length > 0 && (
+          <OccasionBadgeList
+            occasions={(product as any).occasions.map((o: any) => o.occasion || o)}
+            locale={locale}
+          />
+        )}
         {composition && (
           <p className="text-[11px] md:text-sm text-gray-500 font-light tracking-wide italic">
             {composition}
           </p>
         )}
-        <div className="pt-2">
+        <div className="pt-2 flex items-center gap-3">
           <span className="text-lg md:text-xl font-medium">AED {price.toLocaleString()}</span>
+          {compareAtPrice && compareAtPrice > price && (
+            <span className="text-sm md:text-base text-gray-400 line-through">
+              AED {compareAtPrice.toLocaleString()}
+            </span>
+          )}
         </div>
       </div>
 
@@ -114,6 +134,83 @@ export function ProductInfo({
         />
       </div>
 
+      {/* Dynamic Variant Selection */}
+      <div className="space-y-8 py-6 border-y border-gray-100">
+        {product.options?.map((option) => {
+          const isColor = option.nameEn.toLowerCase().includes("color");
+          const selectedValueId = selectedOptions[option.id];
+
+          return (
+            <div key={option.id} className="space-y-4">
+              <div className="flex justify-between items-center text-[10px] md:text-xs font-medium uppercase tracking-[0.2em]">
+                <p>{isArabic ? option.nameAr : option.nameEn}</p>
+                {selectedValueId && (
+                  <p className="text-gray-400 font-light normal-case">
+                    {option.values.find((v) => v.id === selectedValueId)?.[isArabic ? 'valueAr' : 'valueEn']}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {option.values.map((value) => {
+                  const isDisabled = isOptionValueDisabled(option.id, value.id);
+                  const isSelected = selectedValueId === value.id;
+
+                  if (isColor && value.hex) {
+                    return (
+                      <button
+                        key={value.id}
+                        disabled={isDisabled}
+                        onClick={() => onOptionSelect(option.id, value.id)}
+                        className={`w-8 h-8 rounded-full border transition-all relative ${isSelected
+                            ? "border-black ring-1 ring-offset-2 ring-black"
+                            : "border-gray-200"
+                          } ${isDisabled ? "opacity-20 cursor-not-allowed" : "hover:scale-110"}`}
+                        style={{ backgroundColor: value.hex }}
+                        title={isArabic ? value.valueAr : value.valueEn}
+                      >
+                        {isDisabled && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-px h-full bg-white rotate-45" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  }
+
+                  // Find variant with this option value to check fitAdjustment
+                  const variantWithValue = product.variants?.find((v) =>
+                    v.optionValues?.some((ov) => ov.id === value.id)
+                  );
+                  const fitLabel = variantWithValue?.fitAdjustment
+                    ? fitAdjustmentLabels[variantWithValue.fitAdjustment]?.[isArabic ? "ar" : "en"]
+                    : null;
+
+                  return (
+                    <button
+                      key={value.id}
+                      disabled={isDisabled}
+                      onClick={() => onOptionSelect(option.id, value.id)}
+                      className={`min-w-12 px-4 py-2 text-[10px] md:text-xs tracking-widest border transition-all ${isSelected
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-gray-900 border-gray-200 hover:border-black"
+                        } ${isDisabled ? "opacity-20 cursor-not-allowed text-gray-300" : ""}`}
+                    >
+                      {isArabic ? value.valueAr : value.valueEn}
+                      {fitLabel && (
+                        <span className="ml-1 text-[8px] opacity-70">
+                          — {fitLabel}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Main Actions */}
       <div className="space-y-4 mb-0">
         <button
@@ -124,7 +221,7 @@ export function ProductInfo({
         </button>
 
         {/* Benefits List */}
-        <div className="space-y-3 pt-6 border-t border-gray-100">
+        <div className="space-y-3 pt-6">
           {benefits.map((benefit, idx) => (
             <div key={idx} className="flex items-center gap-4 text-gray-600">
               <span className="text-gray-400">{benefit.icon}</span>
@@ -134,54 +231,40 @@ export function ProductInfo({
         </div>
       </div>
 
-      {/* Variant Selection (simplified for Samra look) */}
-      <div className="space-y-6">
-        {uniqueColors.length > 0 && (
-          <div>
-            <p className="text-[10px] md:text-xs font-medium uppercase tracking-[0.2em] mb-3">{isArabic ? "اللون" : "Color"}</p>
-            <div className="flex gap-3">
-              {uniqueColors.map((color) => (
-                <button
-                  key={color.id}
-                  onClick={() => onColorSelect(color.id)}
-                  className={`w-6 h-6 rounded-full border transition-all ${selectedVariant?.color?.id === color.id
-                    ? "border-black ring-1 ring-offset-1 ring-black"
-                    : "border-gray-200"
-                    }`}
-                  style={{ backgroundColor: color.hex }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Key Features Section */}
+      {(product as any).fashionAttributes && (
+        <div className="py-6 border-t border-gray-100">
+          <KeyFeatures attributes={(product as any).fashionAttributes} locale={locale} />
+        </div>
+      )}
+
+      {/* Layering Notice for OUTER transparency */}
+      {(product as any).fashionAttributes?.transparencyLayer === "OUTER" && (
+        <LayeringNotice transparencyLayer="OUTER" locale={locale} />
+      )}
 
       {/* Accordions */}
       <div className="pt-4 border-t border-gray-100">
         <Accordion>
           <AccordionItem title={isArabic ? "الوصف" : "Description"}>
-            <div className="space-y-4">
+            <div className="space-y-4 text-xs md:text-sm font-light leading-relaxed tracking-wide">
               <p>{isArabic ? product.shortDescriptionAr : product.shortDescriptionEn}</p>
-              <ul className="list-disc pl-4 space-y-1">
-                {product.material && <li>{isArabic ? product.material.nameAr : product.material.nameEn}</li>}
-                {product.stone && <li>{isArabic ? product.stone.nameAr : product.stone.nameEn}</li>}
-              </ul>
+              {(isArabic ? product.descriptionAr : product.descriptionEn) && (
+                <p>{isArabic ? product.descriptionAr : product.descriptionEn}</p>
+              )}
             </div>
           </AccordionItem>
           <AccordionItem title={isArabic ? "الشحن والإرجاع" : "Shipping & Returns"}>
-            <p>{isArabic ? "نحن نقدم شحنًا مجانيًا في جميع أنحاء العالم لجميع الطلبات. الإرجاع متاح في غضون 7 أيام." : "We offer complimentary worldwide shipping on all orders. Returns are available within 7 days for any unworn items."}</p>
+            <p className="text-xs font-light tracking-wide">{isArabic ? "نحن نقدم شحنًا مجانيًا في جميع أنحاء العالم لجميع الطلبات. الإرجاع متاح في غضون 7 أيام." : "We offer complimentary worldwide shipping on all orders. Returns are available within 7 days for any unworn items."}</p>
           </AccordionItem>
           <AccordionItem title={isArabic ? "تغليف الطلبات وتقديم الهدايا" : "Order Wrapping & Gifting"}>
-            <p>{isArabic ? "يصل كل طلب من سامرا مغلفًا بذوق رفيع في صندوق هدايا مميز." : "Every Samra order arrives exquisitely wrapped in our signature gift box."}</p>
+            <p className="text-xs font-light tracking-wide">{isArabic ? "يصل كل طلب من سامرا مغلفًا بذوق رفيع في صندوق هدايا مميز." : "Every Samra order arrives exquisitely wrapped in our signature gift box."}</p>
           </AccordionItem>
         </Accordion>
       </div>
 
       {/* Secondary Actions */}
       <div className="space-y-3 pt-6">
-        {/* <button className="w-full py-3 border border-gray-900 text-[10px] font-medium uppercase tracking-widest hover:bg-gray-50 transition-colors">
-          {isArabic ? "حجز موعد" : "BOOK AN APPOINTMENT"}
-        </button> */}
         <button
           onClick={onToggleWishlist}
           className="w-full py-3 border border-gray-900 text-[10px] font-medium uppercase tracking-widest hover:bg-gray-50 transition-colors"
@@ -194,9 +277,9 @@ export function ProductInfo({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pt-6 border-t border-gray-100">
         <div className="flex items-center gap-6">
           <a href="#" className="text-gray-400 hover:text-black transition-colors"><Phone className="h-4 w-4" /></a>
-          <SocialShare 
-            title={name} 
-            image={product.variants?.[0]?.images?.[0]?.url} 
+          <SocialShare
+            title={name}
+            image={product.variants?.[0]?.images?.[0]?.url}
           />
         </div>
         <div className="text-[9px] text-gray-400 uppercase tracking-widest font-light">

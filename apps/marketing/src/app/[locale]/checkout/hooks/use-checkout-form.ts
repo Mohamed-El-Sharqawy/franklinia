@@ -41,7 +41,7 @@ export function useCheckoutForm(savedAddresses: SavedAddress[]) {
 
   // Load from local storage ONCE on mount
   useEffect(() => {
-    const saved = localStorage.getItem("capella_checkout_form");
+    const saved = localStorage.getItem("franklinia_checkout_form");
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -68,7 +68,7 @@ export function useCheckoutForm(savedAddresses: SavedAddress[]) {
   useEffect(() => {
     if (isLoadedFromStorage) {
       const { paymentMethod, ...dataToSave } = formState;
-      localStorage.setItem("capella_checkout_form", JSON.stringify({
+      localStorage.setItem("franklinia_checkout_form", JSON.stringify({
         ...dataToSave,
         selectedAddressId,
       }));

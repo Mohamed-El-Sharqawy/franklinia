@@ -189,7 +189,7 @@ export function MobileMenu() {
               </button>
 
               <Link href="/about" className="block text-3xl font-light tracking-widest opacity-80 hover:opacity-100 transition-opacity">
-                {isArabic ? "قصتنا" : "House of Capella"}
+                {isArabic ? "قصتنا" : "House of Franklinia"}
               </Link>
             </div>
 

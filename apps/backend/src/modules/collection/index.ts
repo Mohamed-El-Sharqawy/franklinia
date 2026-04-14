@@ -1,7 +1,7 @@
 import { Elysia, status } from "elysia";
 import { authPlugin } from "../../plugins/auth";
 import { CollectionService } from "./service";
-import { CollectionModel } from "./model";
+import { CollectionModel, collectionProductsQuery } from "./model";
 
 export const collection = new Elysia({ prefix: "/collections" })
   // Public routes
@@ -32,6 +32,19 @@ export const collection = new Elysia({ prefix: "/collections" })
     if (!col) return status(404, { success: false as const, error: "Collection not found" });
     return { success: true as const, data: col };
   })
+  .get("/:slugOrId/products", async ({ params, query }) => {
+    // Get collection products with fashion-aware filtering
+    const result = await CollectionService.getProductsBySlug(params.slugOrId, {
+      fabric: query.fabric as any,
+      occasion: query.occasion,
+      fitType: query.fitType as any,
+      sleeveStyle: query.sleeveStyle as any,
+      page: query.page,
+      limit: query.limit,
+    });
+    if (!result) return status(404, { success: false as const, error: "Collection not found" });
+    return { success: true as const, data: result };
+  }, { query: collectionProductsQuery })
   // Admin/Editor routes
   .use(authPlugin)
   .post("/", async ({ body }) => {

@@ -54,10 +54,12 @@ export function FixedBottomBar({
         {/* Right: Variant, Quantity, Price, Add to Cart */}
         <div className="flex items-center gap-4">
           <div className="hidden md:block text-sm text-muted-foreground">
-            {selectedVariant?.color &&
-              (isArabic ? selectedVariant.color.nameAr : selectedVariant.color.nameEn)}
-            {selectedVariant?.size &&
-              ` / ${isArabic ? selectedVariant.size.nameAr : selectedVariant.size.nameEn}`}
+            {selectedVariant?.optionValues?.map((ov, i) => (
+              <span key={ov.id}>
+                {i > 0 && ' / '}
+                {isArabic ? ov.valueAr : ov.valueEn}
+              </span>
+            ))}
             {" - "}
             <span className="font-semibold text-foreground">AED {price.toLocaleString()}</span>
           </div>

@@ -70,15 +70,16 @@ export function ViewProductPage() {
           {product.isActive ? "Active" : "Draft"}
         </Badge>
         {product.isFeatured && <Badge variant="outline">Featured</Badge>}
-        <Badge variant="outline">{product.gender}</Badge>
+        <Badge variant="outline">{(product as any).baseCategory ?? 'N/A'}</Badge>
       </div>
 
       <Tabs defaultValue="details" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="variants">Variants ({product.variants.length})</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
-        </TabsList>
+          <TabsList className="grid grid-cols-4 w-full max-w-2xl bg-muted/50 p-1">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="variants">Variants ({product.variants.length})</TabsTrigger>
+            <TabsTrigger value="custom">Customization</TabsTrigger>
+            <TabsTrigger value="seo">SEO</TabsTrigger>
+          </TabsList>
 
         <TabsContent value="details" className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
@@ -203,10 +204,14 @@ export function ViewProductPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Color / Size</p>
-                    <p>
-                      {variant.color?.nameEn || "—"} / {variant.size?.nameEn || "—"}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Options</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {(variant as any).optionValues?.map((ov: any) => (
+                        <Badge key={ov.id} variant="secondary" className="text-[10px]">
+                          {ov.valueEn}
+                        </Badge>
+                      )) || "—"}
+                    </div>
                   </div>
                 </div>
 
@@ -229,6 +234,25 @@ export function ViewProductPage() {
               </CardContent>
             </Card>
           ))}
+        </TabsContent>
+
+        <TabsContent value="custom" className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Customization Fields</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {(product as any).customFields?.map((cf: any) => (
+                  <div key={cf.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <p className="font-medium">{cf.labelEn} / {cf.labelAr}</p>
+                      <p className="text-xs text-muted-foreground uppercase">{cf.type} {cf.isRequired ? "(Required)" : ""}</p>
+                    </div>
+                    {cf.placeholderEn && <p className="text-sm italic text-muted-foreground">"{cf.placeholderEn}"</p>}
+                  </div>
+                )) || <p className="text-muted-foreground">No custom fields defined.</p>}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="seo" className="space-y-6">

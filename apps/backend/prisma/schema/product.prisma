@@ -1,9 +1,3 @@
-enum Gender {
-  MEN
-  WOMEN
-  UNISEX
-}
-
 enum ProductBadge {
   NEW
   BESTSELLER
@@ -26,23 +20,21 @@ model Product {
   metaDescriptionEn String?  @db.Text
   metaDescriptionAr String?  @db.Text
 
-  gender     Gender
-  isActive   Boolean @default(true)
-  isFeatured Boolean @default(false)
-  badge      ProductBadge?
-  isTrending Boolean @default(false)
-  position   Int     @default(0)
+  baseCategory BaseCategory
+  isActive      Boolean @default(true)
+  isFeatured    Boolean @default(false)
+  badge         ProductBadge?
+  isTrending    Boolean @default(false)
+  position      Int     @default(0)
 
   collection   Collection? @relation(fields: [collectionId], references: [id])
   collectionId String?
 
-  // Jewellery attributes
-  material   Material? @relation(fields: [materialId], references: [id])
-  materialId String?
-  stone      Stone? @relation(fields: [stoneId], references: [id])
-  stoneId    String?
-  clarity    Clarity? @relation(fields: [clarityId], references: [id])
-  clarityId  String?
+  // Fashion attributes (1:1)
+  fashionAttributes FashionAttributes?
+
+  // Occasion associations (N:N)
+  occasions ProductOccasion[]
 
   // Display variants for listing cards
   defaultVariant   ProductVariant? @relation("ProductDefaultVariant", fields: [defaultVariantId], references: [id])
@@ -51,6 +43,8 @@ model Product {
   hoverVariantId   String?
 
   variants        ProductVariant[] @relation("ProductVariants")
+  options         ProductOption[]
+  customFields    ProductCustomField[]
   images          ProductImage[]
   favourites      Favourite[]
   wishlist        Wishlist[]
@@ -62,14 +56,11 @@ model Product {
 
   @@index([slug])
   @@index([collectionId])
-  @@index([gender])
+  @@index([baseCategory])
   @@index([isActive, isFeatured])
   @@index([isTrending])
   @@index([position])
   @@index([badge])
-  @@index([materialId])
-  @@index([stoneId])
-  @@index([clarityId])
   @@index([createdAt])
   @@map("products")
 }
@@ -92,6 +83,7 @@ model ProductVariant {
   compareAtPrice Float?
 
   stock          Int     @default(0)
+  fitAdjustment  FitAdjustment?
   isActive       Boolean @default(true)
 
   metaTitleEn       String?
@@ -100,6 +92,7 @@ model ProductVariant {
   metaDescriptionAr String?  @db.Text
 
   images     ProductVariantImage[]
+  optionValues ProductOptionValue[]
   orderItems OrderItem[]
   cartItems  CartItem[]
 
@@ -150,4 +143,30 @@ model ProductVariantImage {
   @@index([imageId])
   @@index([position])
   @@map("product_variant_images")
+}
+
+enum CustomFieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  FILE
+}
+
+model ProductCustomField {
+  id     String          @id @default(cuid())
+  type   CustomFieldType @default(TEXT)
+  labelEn String
+  labelAr String
+  placeholderEn String?
+  placeholderAr String?
+  isRequired    Boolean @default(false)
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_custom_fields")
 }

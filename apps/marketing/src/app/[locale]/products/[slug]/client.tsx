@@ -37,13 +37,11 @@ function ProductPageContent({ product, relatedProducts, locale }: ProductPageCli
   // Hooks
   const {
     selectedVariant,
+    selectedOptions,
     selectedImageIndex,
     setSelectedImageIndex,
-    uniqueColors,
-    uniqueSizes,
-    getSizeAvailability,
-    handleColorSelect,
-    handleSizeSelect,
+    isOptionValueDisabled,
+    handleOptionSelect,
   } = useProductVariant(product);
 
   const {
@@ -118,12 +116,10 @@ function ProductPageContent({ product, relatedProducts, locale }: ProductPageCli
             discountPercent={discountPercent}
             reviewCount={reviewCount}
             locale={locale}
-            uniqueColors={uniqueColors}
-            uniqueSizes={uniqueSizes}
+            selectedOptions={selectedOptions}
             selectedVariant={selectedVariant}
-            onColorSelect={handleColorSelect}
-            onSizeSelect={handleSizeSelect}
-            getSizeAvailability={getSizeAvailability}
+            onOptionSelect={handleOptionSelect}
+            isOptionValueDisabled={isOptionValueDisabled}
             hasSizeGuide={!!product.sizeGuideUrl}
             onOpenSizeGuide={() => setIsSizeGuideOpen(true)}
             quantity={quantity}

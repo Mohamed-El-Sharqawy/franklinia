@@ -109,3 +109,51 @@ model InstagramPost {
   @@index([isActive])
   @@map("instagram_posts")
 }
+
+// Dynamic Pages (About, Size Guide, etc.)
+model Page {
+  id String @id @default(cuid())
+
+  slug String @unique
+
+  titleEn   String
+  titleAr   String
+  contentEn String @db.Text
+  contentAr String @db.Text
+
+  metaTitleEn       String?
+  metaTitleAr       String?
+  metaDescriptionEn String? @db.Text
+  metaDescriptionAr String? @db.Text
+
+  isActive Boolean @default(true)
+  position Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([position])
+  @@map("pages")
+}
+
+// Legal Policies (Shipping, Privacy, etc.)
+model Policy {
+  id String @id @default(cuid())
+
+  slug String @unique
+
+  titleEn   String
+  titleAr   String
+  contentEn String @db.Text
+  contentAr String @db.Text
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@map("policies")
+}

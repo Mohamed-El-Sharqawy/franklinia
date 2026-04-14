@@ -81,25 +81,24 @@ export function QuickViewModal({
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  // Get unique colors/sizes
-  const uniqueColors = product.variants
-    ?.filter((v) => v.color)
-    .reduce((acc, v) => {
-      if (v.color && !acc.find((c) => c.id === v.color!.id)) {
-        acc.push({ ...v.color, variantId: v.id });
+  // Get unique option values
+  const firstOptionValues = product.variants
+    ?.flatMap((v) => v.optionValues?.[0] ? [v.optionValues[0]] : [])
+    .reduce((acc: any[], ov) => {
+      if (!acc.find((a) => a.id === ov.id)) {
+        acc.push(ov);
       }
       return acc;
-    }, [] as Array<{ id: string; hex: string; nameEn: string; nameAr: string; variantId: string }>);
+    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>);
 
-  const uniqueSizes = product.variants
-    ?.filter((v) => v.size)
-    .reduce((acc, v) => {
-      if (v.size && !acc.find((s) => s.id === v.size!.id)) {
-        acc.push({ ...v.size, variantId: v.id });
+  const secondOptionValues = product.variants
+    ?.flatMap((v) => v.optionValues?.[1] ? [v.optionValues[1]] : [])
+    .reduce((acc: any[], ov) => {
+      if (!acc.find((a) => a.id === ov.id)) {
+        acc.push(ov);
       }
       return acc;
-    }, [] as Array<{ id: string; nameEn: string; nameAr: string; position: number; variantId: string }>)
-    .sort((a, b) => a.position - b.position);
+    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>);
 
   const goToNext = useCallback(() => {
     if (activeImages.length === 0) return;
@@ -111,20 +110,13 @@ export function QuickViewModal({
     setCurrentImageIndex((prev) => (prev - 1 + activeImages.length) % activeImages.length);
   }, [activeImages.length]);
 
-  const handleColorSelect = (colorId: string) => {
-    const variant = product.variants?.find((v) => v.color?.id === colorId);
-    if (variant) {
-      setSelectedVariant(variant);
-      setCurrentImageIndex(0);
-    }
-  };
-
-  const handleSizeSelect = (sizeId: string) => {
-    const variant = product.variants?.find(
-      (v) => v.size?.id === sizeId && v.color?.id === selectedVariant?.color?.id
+  const handleOptionSelect = (optionValueId: string) => {
+    const variant = product.variants?.find((v) =>
+      v.optionValues?.some((ov) => ov.id === optionValueId)
     );
     if (variant) {
       setSelectedVariant(variant);
+      setCurrentImageIndex(0);
     }
   };
 
@@ -294,47 +286,53 @@ export function QuickViewModal({
               {description}
             </p>
 
-            {uniqueColors && uniqueColors.length > 0 && (
+            {firstOptionValues && firstOptionValues.length > 0 && (
               <div>
                 <p className="text-sm font-medium mb-2">
-                  {t("color")}:{" "}
+                  {t("option")}:{" "}
                   <span className="font-normal opacity-70">
-                    {isArabic ? selectedVariant?.color?.nameAr : selectedVariant?.color?.nameEn}
+                    {isArabic ? selectedVariant?.optionValues?.[0]?.valueAr : selectedVariant?.optionValues?.[0]?.valueEn}
                   </span>
                 </p>
-                <div className="flex gap-2">
-                  {uniqueColors.map((color) => (
-                    <button
-                      key={color.id}
-                      onClick={() => handleColorSelect(color.id)}
-                      className={`h-9 w-9 rounded-full border-2 transition-all duration-300 ${selectedVariant?.color?.id === color.id
-                        ? "border-primary ring-2 ring-primary ring-offset-2 scale-105 shadow-md"
-                        : "border-border hover:border-black/30"
-                        }`}
-                      style={{ backgroundColor: color.hex }}
-                      aria-label={isArabic ? color.nameAr : color.nameEn}
-                    />
-                  ))}
+                <div className="flex flex-wrap gap-2">
+                  {firstOptionValues.map((ov) => {
+                    const isSelected = selectedVariant?.optionValues?.[0]?.id === ov.id;
+                    return (
+                      <button
+                        key={ov.id}
+                        onClick={() => handleOptionSelect(ov.id)}
+                        className={`px-4 py-2 text-xs font-semibold border transition-all duration-300 uppercase tracking-widest ${isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-md"
+                          : "border-border hover:border-black"
+                          }`}
+                      >
+                        {isArabic ? ov.valueAr : ov.valueEn}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
 
-            {uniqueSizes && uniqueSizes.length > 0 && (
+            {secondOptionValues && secondOptionValues.length > 0 && (
               <div>
-                <p className="text-sm font-medium mb-2">{t("size")}:</p>
+                <p className="text-sm font-medium mb-2">{t("option2")}:</p>
                 <div className="flex flex-wrap gap-2">
-                  {uniqueSizes.map((size) => (
-                    <button
-                      key={size.id}
-                      onClick={() => handleSizeSelect(size.id)}
-                      className={`px-5 py-2.5 text-xs font-semibold border transition-all duration-300 uppercase tracking-widest ${selectedVariant?.size?.id === size.id
-                        ? "bg-primary text-primary-foreground border-primary shadow-md"
-                        : "border-border hover:border-black"
-                        }`}
-                    >
-                      {isArabic ? size.nameAr : size.nameEn}
-                    </button>
-                  ))}
+                  {secondOptionValues.map((ov) => {
+                    const isSelected = selectedVariant?.optionValues?.[1]?.id === ov.id;
+                    return (
+                      <button
+                        key={ov.id}
+                        onClick={() => handleOptionSelect(ov.id)}
+                        className={`px-5 py-2.5 text-xs font-semibold border transition-all duration-300 uppercase tracking-widest ${isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-md"
+                          : "border-border hover:border-black"
+                          }`}
+                      >
+                        {isArabic ? ov.valueAr : ov.valueEn}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

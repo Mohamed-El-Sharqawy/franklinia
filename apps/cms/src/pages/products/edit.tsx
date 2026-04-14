@@ -1,19 +1,13 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, X } from "lucide-react";
 import { useAllCollections } from "@/features/collections";
-import { useMaterials } from "@/features/materials";
-import { useStones } from "@/features/stones";
-import { useClarities } from "@/features/clarities";
 import {
   useProduct,
   useUpdateProduct,
   useCreateVariant,
   useUpdateVariant,
-  useDeleteVariant,
-  useUploadVariantImages,
-  useDeleteVariantImage,
   useProductImages,
   useUploadProductImages,
   useDeleteProductImage,
@@ -21,7 +15,13 @@ import {
   useUnlinkImageFromVariant,
 } from "@/features/products";
 import type { UpdateProductBody, CreateVariantBody, UpdateVariantBody } from "@/features/products";
-import { Gender, ProductBadge } from "@ecommerce/shared-types";
+import { ProductOptionsManager, type ProductOptionForm } from "@/features/products/components/ProductOptionsManager";
+import { VariantMatrix } from "@/features/products/components/VariantMatrix";
+import { CustomFieldsManager, type CustomFieldForm } from "@/features/products/components/CustomFieldsManager";
+import { BaseCategorySelect } from "@/features/products/components/BaseCategorySelect";
+import { FashionAttributesForm, type FashionAttributesInput } from "@/features/products/components/FashionAttributesForm";
+import { OccasionSelector } from "@/features/products/components/OccasionSelector";
+import { ProductBadge, BaseCategory } from "@ecommerce/shared-types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,9 +62,6 @@ export function EditProductPage() {
   const updateProductMutation = useUpdateProduct();
   const createVariantMutation = useCreateVariant();
   const updateVariantMutation = useUpdateVariant();
-  const deleteVariantMutation = useDeleteVariant();
-  const uploadImagesMutation = useUploadVariantImages();
-  const deleteImageMutation = useDeleteVariantImage();
   const uploadProductImagesMutation = useUploadProductImages();
   const deleteProductImageMutation = useDeleteProductImage();
   const linkImageMutation = useLinkImageToVariant();
@@ -72,19 +69,12 @@ export function EditProductPage() {
 
   const { data: productImages } = useProductImages(product?.id ?? "");
 
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [linkImageVariantId, setLinkImageVariantId] = useState<string | null>(null);
 
   const { data: collectionsRes } = useAllCollections();
-  const { data: materialsRes } = useMaterials();
-  const { data: stonesRes } = useStones();
-  const { data: claritiesRes } = useClarities();
 
   const collections = collectionsRes?.data ?? [];
-  const materials = materialsRes?.data ?? [];
-  const stones = stonesRes?.data ?? [];
-  const clarities = claritiesRes?.data ?? [];
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [nameEn, setNameEn] = useState("");
@@ -97,17 +87,27 @@ export function EditProductPage() {
   const [metaTitleAr, setMetaTitleAr] = useState("");
   const [metaDescriptionEn, setMetaDescriptionEn] = useState("");
   const [metaDescriptionAr, setMetaDescriptionAr] = useState("");
-  const [gender, setGender] = useState<Gender>(Gender.UNISEX);
   const [collectionId, setCollectionId] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
   const [badge, setBadge] = useState<ProductBadge | "">("");
-  const [materialId, setMaterialId] = useState("");
-  const [stoneId, setStoneId] = useState("");
-  const [clarityId, setClarityId] = useState("");
   const [position, setPosition] = useState(0);
+  const [baseCategory, setBaseCategory] = useState<BaseCategory | "">("");
+  const [fashionAttributes, setFashionAttributes] = useState<FashionAttributesInput>({
+    fabric: "",
+    embellishment: "NONE",
+    sleeveStyle: "",
+    fitType: "",
+    transparencyLayer: "",
+    neckline: null,
+    length: null,
+  });
+  const [occasionIds, setOccasionIds] = useState<string[]>([]);
+  const [occasionPositions, setOccasionPositions] = useState<Record<string, number>>({});
   const [variants, setVariants] = useState<VariantForm[]>([]);
+  const [options, setOptions] = useState<ProductOptionForm[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldForm[]>([]);
 
   useEffect(() => {
     if (product && !isInitialized) {
@@ -121,18 +121,32 @@ export function EditProductPage() {
       setMetaTitleAr(product.metaTitleAr ?? "");
       setMetaDescriptionEn(product.metaDescriptionEn ?? "");
       setMetaDescriptionAr(product.metaDescriptionAr ?? "");
-      setGender(product.gender as Gender);
       setCollectionId(product.collectionId ?? "");
       setIsActive(product.isActive);
       setIsFeatured(product.isFeatured);
       setIsTrending(product.isTrending ?? false);
       setBadge((product as any).badge ?? "");
-      setMaterialId((product as any).materialId ?? "");
-      setStoneId((product as any).stoneId ?? "");
-      setClarityId((product as any).clarityId ?? "");
       setPosition(product.position ?? 0);
+      setBaseCategory((product as any).baseCategory ?? "");
+      const attrs = (product as any).fashionAttributes;
+      if (attrs) {
+        setFashionAttributes({
+          fabric: attrs.fabric ?? "",
+          embellishment: attrs.embellishment ?? "NONE",
+          sleeveStyle: attrs.sleeveStyle ?? "",
+          fitType: attrs.fitType ?? "",
+          transparencyLayer: attrs.transparencyLayer ?? "",
+          neckline: attrs.neckline ?? null,
+          length: attrs.length ?? null,
+        });
+      }
+      const occ = (product as any).occasions ?? [];
+      setOccasionIds(occ.map((o: any) => o.occasionId));
+      const occPos: Record<string, number> = {};
+      occ.forEach((o: any) => { occPos[o.occasionId] = o.position; });
+      setOccasionPositions(occPos);
       setVariants(
-        product.variants.map((v) => ({
+        (product as any).variants.map((v: any) => ({
           id: v.id,
           nameEn: v.nameEn,
           nameAr: v.nameAr,
@@ -141,77 +155,39 @@ export function EditProductPage() {
           compareAtPrice: v.compareAtPrice ? String(v.compareAtPrice) : "",
           stock: String(v.stock),
           isActive: v.isActive,
+          optionValueIds: (v as any).optionValues?.map((ov: any) => ov.id) ?? [],
         }))
+      );
+      setOptions(
+        (product as any).options?.map((opt: any) => ({
+          id: opt.id,
+          nameEn: opt.nameEn,
+          nameAr: opt.nameAr,
+          position: opt.position,
+          values: opt.values.map((v: any) => ({
+            id: v.id,
+            valueEn: v.valueEn,
+            valueAr: v.valueAr,
+            position: v.position,
+          })),
+        })) ?? []
+      );
+      setCustomFields(
+        (product as any).customFields?.map((f: any) => ({
+          id: f.id,
+          type: f.type,
+          labelEn: f.labelEn,
+          labelAr: f.labelAr,
+          placeholderEn: f.placeholderEn ?? "",
+          placeholderAr: f.placeholderAr ?? "",
+          isRequired: f.isRequired,
+        })) ?? []
       );
       setIsInitialized(true);
     }
   }, [product, isInitialized]);
 
 
-  const addVariant = () => {
-    setVariants([
-      ...variants,
-      {
-        nameEn: "",
-        nameAr: "",
-        sku: "",
-        price: "",
-        compareAtPrice: "",
-        stock: "0",
-        isActive: true,
-        isNew: true,
-      },
-    ]);
-  };
-
-  const removeVariant = async (index: number) => {
-    const variant = variants[index];
-    if (variant.id) {
-      if (!confirm("Delete this variant?")) return;
-      try {
-        await deleteVariantMutation.mutateAsync(variant.id);
-        toast.success("Variant deleted");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to delete variant");
-        return;
-      }
-    }
-    setVariants(variants.filter((_, i) => i !== index));
-  };
-
-  const updateVariant = (index: number, field: keyof VariantForm, value: string | boolean) => {
-    const updated = [...variants];
-    updated[index] = { ...updated[index], [field]: value };
-    setVariants(updated);
-  };
-
-  const handleImageUpload = async (variantId: string, files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    try {
-      await uploadImagesMutation.mutateAsync({
-        variantId,
-        files: Array.from(files),
-      });
-      toast.success("Images uploaded");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload images");
-    }
-  };
-
-  const handleDeleteImage = async (imageId: string) => {
-    if (!confirm("Delete this image?")) return;
-    try {
-      await deleteImageMutation.mutateAsync(imageId);
-      toast.success("Image deleted");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete image");
-    }
-  };
-
-  const getVariantImages = (variantId: string) => {
-    const variant = product?.variants.find((v) => v.id === variantId);
-    return variant?.images ?? [];
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,16 +205,42 @@ export function EditProductPage() {
         metaTitleAr: metaTitleAr || undefined,
         metaDescriptionEn: metaDescriptionEn || undefined,
         metaDescriptionAr: metaDescriptionAr || undefined,
-        gender,
         collectionId: collectionId || undefined,
         isActive,
         isFeatured,
         isTrending,
         badge: badge || undefined,
         position,
-        materialId: materialId || undefined,
-        stoneId: stoneId || undefined,
-        clarityId: clarityId || undefined,
+        baseCategory: baseCategory || undefined,
+        fashionAttributes: fashionAttributes.fabric ? {
+          fabric: fashionAttributes.fabric,
+          embellishment: fashionAttributes.embellishment || "NONE",
+          sleeveStyle: fashionAttributes.sleeveStyle,
+          fitType: fashionAttributes.fitType,
+          transparencyLayer: fashionAttributes.transparencyLayer,
+          neckline: fashionAttributes.neckline || undefined,
+          length: fashionAttributes.length || undefined,
+        } : undefined,
+        occasionIds: occasionIds.length > 0 ? occasionIds : undefined,
+        occasionPositions: Object.keys(occasionPositions).length > 0 ? occasionPositions : undefined,
+        options: options.map(opt => ({
+          nameEn: opt.nameEn,
+          nameAr: opt.nameAr,
+          position: opt.position,
+          values: opt.values.map(v => ({
+            valueEn: v.valueEn,
+            valueAr: v.valueAr,
+            position: v.position
+          }))
+        })),
+        customFields: customFields.map(cf => ({
+          type: cf.type,
+          labelEn: cf.labelEn,
+          labelAr: cf.labelAr,
+          placeholderEn: cf.placeholderEn || undefined,
+          placeholderAr: cf.placeholderAr || undefined,
+          isRequired: cf.isRequired
+        }))
       };
 
       await updateProductMutation.mutateAsync({ id: product.id, body: productBody });
@@ -271,7 +273,7 @@ export function EditProductPage() {
 
       // Invalidate queries once after all mutations complete
       await queryClient.invalidateQueries({ queryKey: ["products"] });
-      
+
       toast.success("Product updated");
       navigate("/products");
     } catch (err) {
@@ -319,10 +321,11 @@ export function EditProductPage() {
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="basic" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
-            <TabsTrigger value="images">Images</TabsTrigger>
-            <TabsTrigger value="variants">Variants ({variants.length})</TabsTrigger>
+            <TabsTrigger value="images">Media</TabsTrigger>
+            <TabsTrigger value="options">Options & Variants</TabsTrigger>
+            <TabsTrigger value="customization">Customization</TabsTrigger>
             <TabsTrigger value="seo">SEO</TabsTrigger>
           </TabsList>
 
@@ -437,19 +440,6 @@ export function EditProductPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Gender</Label>
-                    <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={Gender.MEN}>Men</SelectItem>
-                        <SelectItem value={Gender.WOMEN}>Women</SelectItem>
-                        <SelectItem value={Gender.UNISEX}>Unisex</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
                 <div className="flex items-center gap-8">
@@ -498,66 +488,26 @@ export function EditProductPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Material</Label>
-                    <Select
-                      value={materialId || "none"}
-                      onValueChange={(v) => setMaterialId(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select material" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Material</SelectItem>
-                        {materials.map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Stone</Label>
-                    <Select
-                      value={stoneId || "none"}
-                      onValueChange={(v) => setStoneId(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select stone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Stone</SelectItem>
-                        {stones.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>
-                            {s.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Clarity</Label>
-                    <Select
-                      value={clarityId || "none"}
-                      onValueChange={(v) => setClarityId(v === "none" ? "" : v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select clarity" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Clarity</SelectItem>
-                        {clarities.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nameEn}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Fashion Domain Fields */}
+                <div className="border-t pt-4 mt-4 space-y-4">
+                  <h4 className="text-sm font-medium text-muted-foreground">Fashion Attributes</h4>
+                  <BaseCategorySelect
+                    value={baseCategory}
+                    onChange={(v) => setBaseCategory(v as BaseCategory)}
+                  />
+                  <FashionAttributesForm
+                    value={fashionAttributes}
+                    onChange={setFashionAttributes}
+                  />
+                  <OccasionSelector
+                    selectedIds={occasionIds}
+                    onChange={(ids, positions) => {
+                      setOccasionIds(ids);
+                      setOccasionPositions(positions);
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -670,11 +620,10 @@ export function EditProductPage() {
                                         toast.error(err instanceof Error ? err.message : "Failed");
                                       }
                                     }}
-                                    className={`text-xs px-2 py-1 rounded-full border transition ${
-                                      isLinked
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : "bg-muted/50 border-border hover:border-primary"
-                                    }`}
+                                    className={`text-xs px-2 py-1 rounded-full border transition ${isLinked
+                                      ? "bg-primary text-primary-foreground border-primary"
+                                      : "bg-muted/50 border-border hover:border-primary"
+                                      }`}
                                   >
                                     {variant.nameEn ?? `Variant ${idx + 1}`}
                                   </button>
@@ -695,151 +644,27 @@ export function EditProductPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="variants" className="space-y-4">
-            {variants.map((variant, index) => (
-              <Card key={variant.id ?? `new-${index}`}>
-                <CardHeader className="flex flex-row items-center justify-between py-3">
-                  <CardTitle className="text-base">
-                    {variant.isNew ? "New Variant" : `Variant: ${variant.nameEn || index + 1}`}
-                  </CardTitle>
-                  {variants.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeVariant(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Name (English) *</Label>
-                      <Input
-                        value={variant.nameEn}
-                        onChange={(e) => updateVariant(index, "nameEn", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Name (Arabic) *</Label>
-                      <Input
-                        value={variant.nameAr}
-                        onChange={(e) => updateVariant(index, "nameAr", e.target.value)}
-                        dir="rtl"
-                      />
-                    </div>
-                  </div>
+          <TabsContent value="options" className="space-y-6">
+            <ProductOptionsManager
+              options={options}
+              onChange={setOptions}
+            />
+            <VariantMatrix
+              variants={variants}
+              options={options}
+              onChange={setVariants}
+              productImagesCount={productImages?.data?.length ?? 0}
+              onUploadRequest={(id) => {
+                setLinkImageVariantId(id);
+              }}
+            />
+          </TabsContent>
 
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>SKU</Label>
-                      <Input
-                        value={variant.sku}
-                        onChange={(e) => updateVariant(index, "sku", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Price *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={variant.price}
-                        onChange={(e) => updateVariant(index, "price", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Compare at Price</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={variant.compareAtPrice}
-                        onChange={(e) => updateVariant(index, "compareAtPrice", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Stock</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={variant.stock}
-                        onChange={(e) => updateVariant(index, "stock", e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                        <Switch
-                          checked={variant.isActive}
-                          onCheckedChange={(v) => updateVariant(index, "isActive", v)}
-                        />
-                        <Label>Active</Label>
-                      </div>
-
-                  {variant.id && !variant.isNew && (
-                    <div className="space-y-2 pt-4 border-t">
-                      <div className="flex items-center justify-between">
-                        <Label>Images</Label>
-                        <span className="text-xs text-muted-foreground">Recommended: 337 × 505 px</span>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {getVariantImages(variant.id).map((img) => (
-                          <div key={img.id} className="relative group">
-                            <img
-                              src={img.url}
-                              alt={img.altEn || variant.nameEn}
-                              className="h-20 w-20 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => setPreviewImageUrl(img.url)}
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => handleDeleteImage(img.id)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ))}
-                        {/* Link existing product images */}
-                        <button
-                          type="button"
-                          onClick={() => setLinkImageVariantId(variant.id!)}
-                          className="flex flex-col items-center justify-center h-20 w-20 border-2 border-dashed border-primary/50 rounded-lg cursor-pointer hover:bg-primary/5 text-primary"
-                        >
-                          <Plus className="h-5 w-5" />
-                          <span className="text-xs mt-1">Link</span>
-                        </button>
-                        {/* Upload new images */}
-                        <label className="flex flex-col items-center justify-center h-20 w-20 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
-                          <Upload className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground mt-1">Upload</span>
-                          <input
-                            ref={(el) => {
-                              if (variant.id) fileInputRefs.current[variant.id] = el;
-                            }}
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={(e) => variant.id && handleImageUpload(variant.id, e.target.files)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-
-            <Button type="button" variant="outline" onClick={addVariant} className="w-full">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Variant
-            </Button>
+          <TabsContent value="customization" className="space-y-6">
+            <CustomFieldsManager
+              fields={customFields}
+              onChange={setCustomFields}
+            />
           </TabsContent>
 
           <TabsContent value="seo" className="space-y-6">
@@ -958,11 +783,10 @@ export function EditProductPage() {
                           toast.error(err instanceof Error ? err.message : "Failed");
                         }
                       }}
-                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition ${
-                        isLinked
-                          ? "border-primary ring-2 ring-primary/20"
-                          : "border-transparent hover:border-muted-foreground/30"
-                      }`}
+                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition ${isLinked
+                        ? "border-primary ring-2 ring-primary/20"
+                        : "border-transparent hover:border-muted-foreground/30"
+                        }`}
                     >
                       <img
                         src={img.url}

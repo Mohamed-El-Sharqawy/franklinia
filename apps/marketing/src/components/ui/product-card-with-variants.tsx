@@ -38,7 +38,7 @@ export function ProductCardWithVariants({
   const [isCardHovered, setIsCardHovered] = useState(false);
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null);
+  const [selectedOptionValueId, setSelectedOptionValueId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
@@ -61,74 +61,59 @@ export function ProductCardWithVariants({
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  // Get unique colors from variants
-  const uniqueColors = product.variants
-    ?.filter((v) => v.color)
-    .reduce((acc, v) => {
-      if (v.color && !acc.find((c) => c.id === v.color!.id)) {
-        acc.push({ ...v.color, variantId: v.id });
+  // Get unique first option values from variants (e.g., Color or Size)
+  const firstOptionValues = product.variants
+    ?.flatMap((v) => v.optionValues?.[0] ? [v.optionValues[0]] : [])
+    .reduce((acc: any[], ov) => {
+      if (!acc.find((a) => a.id === ov.id)) {
+        acc.push(ov);
       }
       return acc;
-    }, [] as Array<{ id: string; hex: string; nameEn: string; nameAr: string; variantId: string }>)
+    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>)
     .slice(0, 8);
 
-  // Get unique sizes from variants
-  const uniqueSizes = product.variants
-    ?.filter((v) => v.size)
-    .reduce((acc, v) => {
-      if (v.size && !acc.find((s) => s.id === v.size!.id)) {
-        acc.push({ ...v.size, variantId: v.id });
+  // Get unique second option values from variants (if exists)
+  const secondOptionValues = product.variants
+    ?.flatMap((v) => v.optionValues?.[1] ? [v.optionValues[1]] : [])
+    .reduce((acc: any[], ov) => {
+      if (!acc.find((a) => a.id === ov.id)) {
+        acc.push(ov);
       }
       return acc;
-    }, [] as Array<{ id: string; nameEn: string; nameAr: string; position: number; variantId: string }>)
-    .sort((a, b) => a.position - b.position);
+    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>);
 
-  const handleColorHover = (colorId: string) => {
-    const variant = product.variants?.find((v) => v.color?.id === colorId);
+  const handleOptionHover = (optionValueId: string) => {
+    const variant = product.variants?.find((v) => 
+      v.optionValues?.some((ov) => ov.id === optionValueId)
+    );
     if (variant) {
       setSelectedVariant(variant);
     }
   };
 
-  const handleSizeSelect = (sizeId: string) => {
-    setSelectedSizeId(sizeId);
-    // Find variant with current color and selected size
-    if (selectedVariant?.color?.id) {
-      const matchingVariant = product.variants?.find(
-        (v) =>
-          v.color?.id === selectedVariant.color?.id && v.size?.id === sizeId
-      );
-      if (matchingVariant) {
-        setSelectedVariant(matchingVariant);
-      }
+  const handleOptionSelect = (optionValueId: string) => {
+    setSelectedOptionValueId(optionValueId);
+    // Find variant with selected option
+    const matchingVariant = product.variants?.find((v) =>
+      v.optionValues?.some((ov) => ov.id === optionValueId)
+    );
+    if (matchingVariant) {
+      setSelectedVariant(matchingVariant);
     }
   };
 
   const handleQuickAdd = () => {
     if (!selectedVariant) return;
 
-    // Ensure we have a variant with the selected size
-    let variantToAdd = selectedVariant;
-    if (selectedSizeId && selectedVariant.size?.id !== selectedSizeId) {
-      const matchingVariant = product.variants?.find(
-        (v) =>
-          v.color?.id === selectedVariant.color?.id &&
-          v.size?.id === selectedSizeId
-      );
-      if (matchingVariant) {
-        variantToAdd = matchingVariant;
-      }
-    }
-
     setIsAdding(true);
-    const newCartItem = createCartItemFromVariant(variantToAdd, {
+    const newCartItem = createCartItemFromVariant(selectedVariant, {
       id: product.id,
       slug: product.slug,
       nameEn: product.nameEn,
       nameAr: product.nameAr,
     });
     addItem(newCartItem);
-    trackQuickAddToCart(product.id, variantToAdd.id, name, variantToAdd.price, 1);
+    trackQuickAddToCart(product.id, selectedVariant.id, name, selectedVariant.price, 1);
 
     // Show success state briefly
     setTimeout(() => {
@@ -157,7 +142,7 @@ export function ProductCardWithVariants({
         onMouseEnter={() => setIsCardHovered(true)}
         onMouseLeave={() => {
           setIsCardHovered(false);
-          setSelectedSizeId(null);
+          setSelectedOptionValueId(null);
         }}
       >
         <div
@@ -345,19 +330,19 @@ export function ProductCardWithVariants({
               )}
             </div>
 
-            {/* Size Selector */}
-            {uniqueSizes && uniqueSizes.length > 0 && (
-              <div className="flex justify-center gap-2 py-3 px-2">
-                {uniqueSizes.map((size) => (
+            {/* Option Selector */}
+            {secondOptionValues && secondOptionValues.length > 0 && (
+              <div className="flex justify-center gap-2 py-3 px-2 flex-wrap">
+                {secondOptionValues.map((ov) => (
                   <button
-                    key={size.id}
-                    onClick={() => handleSizeSelect(size.id)}
-                    className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${selectedSizeId === size.id
+                    key={ov.id}
+                    onClick={() => handleOptionSelect(ov.id)}
+                    className={`min-w-[36px] px-2 py-1.5 text-xs font-medium border rounded transition ${selectedOptionValueId === ov.id
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-border hover:border-primary"
                       }`}
                   >
-                    {isArabic ? size.nameAr : size.nameEn}
+                    {isArabic ? ov.valueAr : ov.valueEn}
                   </button>
                 ))}
               </div>
@@ -382,20 +367,23 @@ export function ProductCardWithVariants({
             </span>
           </div>
 
-          {uniqueColors && uniqueColors.length > 0 && (
-            <div className="flex gap-1 pt-1">
-              {uniqueColors.map((color) => (
-                <button
-                  key={color.id}
-                  className={`h-4 w-4 rounded-full border transition-transform hover:scale-125 ${selectedVariant?.color?.id === color.id
-                    ? "border-primary ring-1 ring-primary ring-offset-1"
-                    : "border-border"
-                    }`}
-                  style={{ backgroundColor: color.hex }}
-                  onMouseEnter={() => handleColorHover(color.id)}
-                  aria-label={isArabic ? color.nameAr : color.nameEn}
-                />
-              ))}
+          {firstOptionValues && firstOptionValues.length > 0 && (
+            <div className="flex gap-1 pt-1 flex-wrap">
+              {firstOptionValues.map((ov) => {
+                const isSelected = selectedVariant?.optionValues?.some((v) => v.id === ov.id);
+                return (
+                  <button
+                    key={ov.id}
+                    className={`min-w-[24px] px-1.5 py-0.5 text-[10px] font-medium border rounded transition-transform hover:scale-105 ${isSelected
+                      ? "border-primary ring-1 ring-primary ring-offset-1 bg-primary/10"
+                      : "border-border"
+                      }`}
+                    onMouseEnter={() => handleOptionHover(ov.id)}
+                  >
+                    {isArabic ? ov.valueAr : ov.valueEn}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
