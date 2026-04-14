@@ -84,6 +84,20 @@ export async function apiClient<T = unknown>(
     return response.json();
   } catch (error: any) {
     clearTimeout(timeoutId);
+    
+    // Next.js build phase check (only available during npm run build)
+    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+    const isConnectionError = error.code === 'ECONNREFUSED' || 
+                             error.message?.includes('fetch failed') || 
+                             error.name === 'TypeError';
+
+    if (isBuildPhase && isConnectionError) {
+      // Return a safe empty response structure to prevent build crashes
+      // while still allowing ISR to update the page correctly at runtime
+      console.warn(`[Build Phase] API unreachable: ${endpoint}. Using empty fallback.`);
+      return { success: false, data: [] } as any;
+    }
+
     if (error.name === "AbortError") {
       throw new Error("Request timed out after 10 seconds");
     }
