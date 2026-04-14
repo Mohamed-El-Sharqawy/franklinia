@@ -91,64 +91,20 @@ export default async function AboutPage({ params }: AboutPageProps) {
           <section className="py-24 md:py-32 bg-white">
             <div className="max-w-4xl mx-auto px-4">
               <AnimateOnScroll direction="up">
-                <div className="text-center space-y-8">
+                <div className="text-center space-y-12">
                   <h2 className="text-2xl md:text-3xl font-light uppercase tracking-[0.25em]">
                     {t("story.title")}
                   </h2>
                   <div className="w-16 h-px bg-black/20 mx-auto" />
-                  <p className="text-lg md:text-xl leading-relaxed font-light text-neutral-700">
-                    {t("story.content")}
-                  </p>
-                </div>
-              </AnimateOnScroll>
-            </div>
-          </section>
-
-          {/* Philosophy Section */}
-          <section className="py-24 md:py-32 bg-neutral-50">
-            <div className="max-w-7xl mx-auto px-4 md:px-8">
-              <AnimateOnScroll direction="up">
-                <div className="text-center mb-16 space-y-4">
-                  <h2 className="text-2xl md:text-3xl font-light uppercase tracking-[0.25em]">
-                    {t("philosophy.title")}
-                  </h2>
-                  <div className="w-16 h-px bg-black/20 mx-auto" />
-                </div>
-              </AnimateOnScroll>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-                {[
-                  { 
-                    title: t("philosophy.quality"), 
-                    desc: t("philosophy.qualityDesc"),
-                    img: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&h=400&fit=crop"
-                  },
-                  { 
-                    title: t("philosophy.craftsmanship"), 
-                    desc: t("philosophy.craftsmanshipDesc"),
-                    img: "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=600&h=400&fit=crop"
-                  },
-                  { 
-                    title: t("philosophy.innovation"), 
-                    desc: t("philosophy.innovationDesc"),
-                    img: "https://images.unsplash.com/photo-1531995811006-35cb42e1a022?w=600&h=400&fit=crop"
-                  }
-                ].map((p, i) => (
-                  <AnimateOnScroll key={i} direction="up" delay={i * 0.1}>
-                    <div className="space-y-6">
-                      <div className="relative aspect-video overflow-hidden rounded-sm">
-                        <Image src={p.img} alt={p.title} fill className="object-cover" />
-                      </div>
-                      <h3 className="text-sm md:text-base font-medium uppercase tracking-[0.2em]">
-                        {p.title}
-                      </h3>
-                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed font-light">
-                        {p.desc}
+                  <div className="space-y-8">
+                    {t("story.content").split("\n\n").map((para, i) => (
+                      <p key={i} className="text-lg md:text-xl leading-relaxed font-light text-neutral-700">
+                        {para}
                       </p>
-                    </div>
-                  </AnimateOnScroll>
-                ))}
-              </div>
+                    ))}
+                  </div>
+                </div>
+              </AnimateOnScroll>
             </div>
           </section>
         </>

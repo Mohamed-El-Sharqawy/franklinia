@@ -130,7 +130,7 @@ export function HeroBanner({ banners, locale }: HeroBannerProps) {
             loading="eager"
             priority={index === 0}
             className="object-cover"
-            // style={{ objectPosition: '25% center' }}
+            // style={{ objectPosition: '14% center' }}
             sizes="100vw"
             draggable={false}
           />

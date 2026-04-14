@@ -265,7 +265,7 @@
       "phone": "Phone",
       "phoneValue": "+971 50 123 4567",
       "email": "Email",
-      "emailValue": "support@nznstudio.com",
+      "emailValue": "support@frankliniaae.com",
       "address": "Address",
       "addressValue": "Dubai, UAE",
       "hours": "Working Hours",
@@ -640,20 +640,11 @@
     }
   },
   "about": {
-    "title": "About Franklinia",
+    "title": "About Us",
     "story": {
-      "title": "Our Story",
-      "subtitle": "Crafting Elegance Since 1990",
-      "content": "Inspired by the beauty of cosmos, stars and the mysteries of outer space. We believe that just like stars, every individual shines with their own unique light. With FRANKLINIA explore the unknown, embrace the extraordinary and shine beyond."
-    },
-    "philosophy": {
-      "title": "Our Philosophy",
-      "quality": "Uncompromising Quality",
-      "qualityDesc": "We source the finest materials and employ master artisans to ensure every piece meets the highest standards.",
-      "craftsmanship": "Artisanal Craftsmanship",
-      "craftsmanshipDesc": "Each design is a labor of love, combining age-old techniques with modern innovation.",
-      "innovation": "Modern Innovation",
-      "innovationDesc": "We continuously push boundaries in design, creating unique geometric patterns that define modern luxury."
+      "title": "About Us",
+      "subtitle": "Defined by elegance. Worn with intention.",
+      "content": "Franklinia Boutique is a celebration of refined elegance, where timeless design meets modern sophistication.\n\nRooted in a deep appreciation for craftsmanship and detail, Franklinia curates exclusive pieces that embody quiet luxury and effortless grace. Every collection is intentionally selected to reflect a balance of understated beauty and distinctive character — designed for those who value quality beyond trends.\n\nWe believe true style is enduring. It is found in impeccable fabrics, precise tailoring, and silhouettes that transcend seasons. Our pieces are created to elevate everyday moments and accompany you through life’s most memorable occasions with confidence and poise.\n\nAt Franklinia, luxury is not loud — it is felt. It is in the experience, the detail, and the identity each piece carries.\n\nFranklinia Boutique — Defined by elegance. Worn with intention."
     }
   }
 }
