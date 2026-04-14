@@ -74,6 +74,8 @@ services:
     build:
       context: .
       dockerfile: apps/cms/Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL}
     container_name: franklinia-cms
     restart: unless-stopped
     expose:

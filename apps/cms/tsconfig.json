@@ -22,5 +22,5 @@
       "@backend/*": ["../backend/src/*"]
     }
   },
-  "include": ["src", "vite-env.d.ts", "../backend/src/index.ts"]
+  "include": ["src", "vite-env.d.ts"]
 }

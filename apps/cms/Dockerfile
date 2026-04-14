@@ -32,6 +32,8 @@ COPY pnpm-workspace.yaml ./
 ENV NODE_ENV=production
 
 # Build Vite app
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 WORKDIR /app/apps/cms
 RUN pnpm build
 
