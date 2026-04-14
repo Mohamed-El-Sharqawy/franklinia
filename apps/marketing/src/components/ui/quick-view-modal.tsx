@@ -32,11 +32,28 @@ export function QuickViewModal({
     ? product.shortDescriptionAr || product.descriptionAr
     : product.shortDescriptionEn || product.descriptionEn;
 
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(
-    product.variants?.[0] ?? ({} as ProductVariant)
-  );
+  // 1. Initialize Options State
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    const baseVariant = product.variants?.[0] || null;
+
+    if (baseVariant && (baseVariant as any).optionValues) {
+      (baseVariant as any).optionValues.forEach((ov: any) => {
+        initial[ov.optionId] = ov.id;
+      });
+    }
+    return initial;
+  });
+
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // 2. Derive current active variant
+  const selectedVariant = product.variants?.find((v: any) => {
+    if (!v.optionValues) return false;
+    const vOptionValueIds = v.optionValues.map((ov: any) => ov.id);
+    return Object.values(selectedOptions).every(id => vOptionValueIds.includes(id));
+  }) || product.variants?.[0];
 
   // Swipe logic (Exactly as per hero-banner.tsx)
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -81,25 +98,6 @@ export function QuickViewModal({
       ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
       : null;
 
-  // Get unique option values
-  const firstOptionValues = product.variants
-    ?.flatMap((v) => v.optionValues?.[0] ? [v.optionValues[0]] : [])
-    .reduce((acc: any[], ov) => {
-      if (!acc.find((a) => a.id === ov.id)) {
-        acc.push(ov);
-      }
-      return acc;
-    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>);
-
-  const secondOptionValues = product.variants
-    ?.flatMap((v) => v.optionValues?.[1] ? [v.optionValues[1]] : [])
-    .reduce((acc: any[], ov) => {
-      if (!acc.find((a) => a.id === ov.id)) {
-        acc.push(ov);
-      }
-      return acc;
-    }, [] as Array<{ id: string; valueEn: string; valueAr: string }>);
-
   const goToNext = useCallback(() => {
     if (activeImages.length === 0) return;
     setCurrentImageIndex((prev) => (prev + 1) % activeImages.length);
@@ -110,14 +108,48 @@ export function QuickViewModal({
     setCurrentImageIndex((prev) => (prev - 1 + activeImages.length) % activeImages.length);
   }, [activeImages.length]);
 
-  const handleOptionSelect = (optionValueId: string) => {
-    const variant = product.variants?.find((v) =>
-      v.optionValues?.some((ov) => ov.id === optionValueId)
-    );
-    if (variant) {
-      setSelectedVariant(variant);
-      setCurrentImageIndex(0);
-    }
+  // 4. Availability Logic (The "Lookahead")
+  const isOptionValueDisabled = useCallback((optionId: string, valueId: string) => {
+    if (!product.variants) return true;
+
+    const hypotheticalOptions = { ...selectedOptions, [optionId]: valueId };
+    
+    const exists = product.variants.some((v: any) => {
+      if (!v.optionValues) return false;
+      return Object.entries(hypotheticalOptions).every(([optId, valId]) => {
+         const valueForThisOpt = v.optionValues.find((ov: any) => ov.optionId === optId);
+         return valueForThisOpt?.id === valId;
+      });
+    });
+
+    return !exists;
+  }, [product.variants, selectedOptions]);
+
+  // 5. Selection Handler
+  const handleOptionSelect = (optionId: string, valueId: string) => {
+    setSelectedOptions(prev => {
+      const next = { ...prev, [optionId]: valueId };
+      
+      const match = product.variants?.find((v: any) => {
+        if (!v.optionValues) return false;
+        const vOptionValueIds = v.optionValues.map((ov: any) => ov.id);
+        return Object.values(next).every(id => vOptionValueIds.includes(id));
+      });
+
+      if (!match) {
+        const fallback = product.variants?.find((v: any) => v.optionValues?.some((ov: any) => ov.id === valueId));
+        if (fallback && (fallback as any).optionValues) {
+            const fallbackOptions: Record<string, string> = {};
+            (fallback as any).optionValues.forEach((ov: any) => {
+                fallbackOptions[ov.optionId] = ov.id;
+            });
+            return fallbackOptions;
+        }
+      }
+
+      return next;
+    });
+    setCurrentImageIndex(0);
   };
 
   const handleAddToCart = () => {
@@ -286,56 +318,69 @@ export function QuickViewModal({
               {description}
             </p>
 
-            {firstOptionValues && firstOptionValues.length > 0 && (
-              <div>
-                <p className="text-sm font-medium mb-2">
-                  {t("option")}:{" "}
-                  <span className="font-normal opacity-70">
-                    {isArabic ? selectedVariant?.optionValues?.[0]?.valueAr : selectedVariant?.optionValues?.[0]?.valueEn}
-                  </span>
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {firstOptionValues.map((ov) => {
-                    const isSelected = selectedVariant?.optionValues?.[0]?.id === ov.id;
-                    return (
-                      <button
-                        key={ov.id}
-                        onClick={() => handleOptionSelect(ov.id)}
-                        className={`px-4 py-2 text-xs font-semibold border transition-all duration-300 uppercase tracking-widest ${isSelected
-                          ? "bg-primary text-primary-foreground border-primary shadow-md"
-                          : "border-border hover:border-black"
-                          }`}
-                      >
-                        {isArabic ? ov.valueAr : ov.valueEn}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {/* Dynamic Variant Selection */}
+            <div className="space-y-6 pt-4">
+              {product.options?.map((option) => {
+                const isColor = option.nameEn.toLowerCase().includes("color");
+                const selectedValueId = selectedOptions[option.id];
 
-            {secondOptionValues && secondOptionValues.length > 0 && (
-              <div>
-                <p className="text-sm font-medium mb-2">{t("option2")}:</p>
-                <div className="flex flex-wrap gap-2">
-                  {secondOptionValues.map((ov) => {
-                    const isSelected = selectedVariant?.optionValues?.[1]?.id === ov.id;
-                    return (
-                      <button
-                        key={ov.id}
-                        onClick={() => handleOptionSelect(ov.id)}
-                        className={`px-5 py-2.5 text-xs font-semibold border transition-all duration-300 uppercase tracking-widest ${isSelected
-                          ? "bg-primary text-primary-foreground border-primary shadow-md"
-                          : "border-border hover:border-black"
-                          }`}
-                      >
-                        {isArabic ? ov.valueAr : ov.valueEn}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                return (
+                  <div key={option.id} className="space-y-3">
+                    <div className="flex justify-between items-center text-[10px] md:text-xs font-medium uppercase tracking-[0.2em]">
+                      <p>{isArabic ? option.nameAr : option.nameEn}</p>
+                      {selectedValueId && (
+                        <p className="text-gray-400 font-light normal-case">
+                          {option.values.find((v) => v.id === selectedValueId)?.[isArabic ? 'valueAr' : 'valueEn']}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {option.values.map((value) => {
+                        const isDisabled = isOptionValueDisabled(option.id, value.id);
+                        const isSelected = selectedValueId === value.id;
+
+                        if (isColor && value.hex) {
+                          return (
+                            <button
+                              key={value.id}
+                              disabled={isDisabled}
+                              onClick={() => handleOptionSelect(option.id, value.id)}
+                              className={`w-8 h-8 rounded-full border transition-all relative ${isSelected
+                                  ? "border-black ring-1 ring-offset-2 ring-black"
+                                  : "border-gray-200"
+                                } ${isDisabled ? "opacity-20 cursor-not-allowed" : "hover:scale-110"}`}
+                              style={{ backgroundColor: value.hex }}
+                              title={isArabic ? value.valueAr : value.valueEn}
+                            >
+                              {isDisabled && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-px h-full bg-white rotate-45" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <button
+                            key={value.id}
+                            disabled={isDisabled}
+                            onClick={() => handleOptionSelect(option.id, value.id)}
+                            className={`min-w-12 px-4 py-2 text-[10px] md:text-xs tracking-widest border transition-all ${isSelected
+                                ? "bg-black text-white border-black"
+                                : "bg-white text-gray-900 border-gray-200 hover:border-black"
+                              } ${isDisabled ? "opacity-20 cursor-not-allowed text-gray-300" : ""}`}
+                          >
+                            {isArabic ? value.valueAr : value.valueEn}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             <div>
               <p className="text-sm font-medium mb-2">{t("quantity")}:</p>

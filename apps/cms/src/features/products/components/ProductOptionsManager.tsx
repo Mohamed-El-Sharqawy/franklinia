@@ -13,6 +13,7 @@ export interface ProductOptionForm {
     id?: string;
     valueEn: string;
     valueAr: string;
+    hex?: string;
     position: number;
   }>;
 }
@@ -30,7 +31,7 @@ export function ProductOptionsManager({ options, onChange }: Props) {
         nameEn: "",
         nameAr: "",
         position: options.length,
-        values: [{ valueEn: "", valueAr: "", position: 0 }],
+        values: [{ valueEn: "", valueAr: "", hex: undefined, position: 0 }],
       },
     ]);
   };
@@ -50,6 +51,7 @@ export function ProductOptionsManager({ options, onChange }: Props) {
     newOptions[optIndex].values.push({
       valueEn: "",
       valueAr: "",
+      hex: undefined,
       position: newOptions[optIndex].values.length,
     });
     onChange(newOptions);
@@ -133,6 +135,22 @@ export function ProductOptionsManager({ options, onChange }: Props) {
                     onChange={(e) => updateValue(optIdx, valIdx, "valueAr", e.target.value)}
                     dir="rtl"
                   />
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="color"
+                      value={val.hex || "#000000"}
+                      onChange={(e) => updateValue(optIdx, valIdx, "hex", e.target.value)}
+                      className="w-8 h-8 p-0 border cursor-pointer"
+                      title="Color hex value"
+                    />
+                    <Input
+                      size={8}
+                      placeholder="#000"
+                      value={val.hex || ""}
+                      onChange={(e) => updateValue(optIdx, valIdx, "hex", e.target.value)}
+                      className="w-20 text-xs"
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"

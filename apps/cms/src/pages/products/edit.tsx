@@ -8,6 +8,7 @@ import {
   useUpdateProduct,
   useCreateVariant,
   useUpdateVariant,
+  useDeleteVariant,
   useProductImages,
   useUploadProductImages,
   useDeleteProductImage,
@@ -49,6 +50,7 @@ interface VariantForm {
   stock: string;
   isActive: boolean;
   isNew?: boolean;
+  optionValueIds?: string[];
 }
 
 export function EditProductPage() {
@@ -62,6 +64,7 @@ export function EditProductPage() {
   const updateProductMutation = useUpdateProduct();
   const createVariantMutation = useCreateVariant();
   const updateVariantMutation = useUpdateVariant();
+  const deleteVariantMutation = useDeleteVariant();
   const uploadProductImagesMutation = useUploadProductImages();
   const deleteProductImageMutation = useDeleteProductImage();
   const linkImageMutation = useLinkImageToVariant();
@@ -106,6 +109,7 @@ export function EditProductPage() {
   const [occasionIds, setOccasionIds] = useState<string[]>([]);
   const [occasionPositions, setOccasionPositions] = useState<Record<string, number>>({});
   const [variants, setVariants] = useState<VariantForm[]>([]);
+  const [originalVariantIds, setOriginalVariantIds] = useState<string[]>([]);
   const [options, setOptions] = useState<ProductOptionForm[]>([]);
   const [customFields, setCustomFields] = useState<CustomFieldForm[]>([]);
 
@@ -145,8 +149,9 @@ export function EditProductPage() {
       const occPos: Record<string, number> = {};
       occ.forEach((o: any) => { occPos[o.occasionId] = o.position; });
       setOccasionPositions(occPos);
+      const productVariants = (product as any).variants;
       setVariants(
-        (product as any).variants.map((v: any) => ({
+        productVariants.map((v: any) => ({
           id: v.id,
           nameEn: v.nameEn,
           nameAr: v.nameAr,
@@ -158,6 +163,7 @@ export function EditProductPage() {
           optionValueIds: (v as any).optionValues?.map((ov: any) => ov.id) ?? [],
         }))
       );
+      setOriginalVariantIds(productVariants.map((v: any) => v.id));
       setOptions(
         (product as any).options?.map((opt: any) => ({
           id: opt.id,
@@ -168,6 +174,7 @@ export function EditProductPage() {
             id: v.id,
             valueEn: v.valueEn,
             valueAr: v.valueAr,
+            hex: v.hex,
             position: v.position,
           })),
         })) ?? []
@@ -230,6 +237,7 @@ export function EditProductPage() {
           values: opt.values.map(v => ({
             valueEn: v.valueEn,
             valueAr: v.valueAr,
+            hex: v.hex,
             position: v.position
           }))
         })),
@@ -245,6 +253,13 @@ export function EditProductPage() {
 
       await updateProductMutation.mutateAsync({ id: product.id, body: productBody });
 
+      // Delete variants that were removed
+      const currentVariantIds = variants.filter(v => v.id).map(v => v.id!);
+      const deletedVariantIds = originalVariantIds.filter(id => !currentVariantIds.includes(id));
+      for (const variantId of deletedVariantIds) {
+        await deleteVariantMutation.mutateAsync(variantId);
+      }
+
       for (const variant of variants) {
         if (variant.isNew) {
           const body: CreateVariantBody = {
@@ -255,6 +270,7 @@ export function EditProductPage() {
             compareAtPrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice) : undefined,
             stock: parseInt(variant.stock) || 0,
             isActive: variant.isActive,
+            optionValueIds: variant.optionValueIds,
           };
           await createVariantMutation.mutateAsync({ productId: product.id, body });
         } else if (variant.id) {
@@ -266,6 +282,7 @@ export function EditProductPage() {
             compareAtPrice: variant.compareAtPrice ? parseFloat(variant.compareAtPrice) : undefined,
             stock: parseInt(variant.stock) || 0,
             isActive: variant.isActive,
+            optionValueIds: variant.optionValueIds,
           };
           await updateVariantMutation.mutateAsync({ variantId: variant.id, body });
         }

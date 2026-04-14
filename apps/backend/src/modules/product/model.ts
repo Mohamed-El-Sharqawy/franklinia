@@ -42,6 +42,7 @@ export const ProductModel = {
             t.Object({
               valueEn: t.String(),
               valueAr: t.String(),
+              hex: t.Optional(t.Union([t.String(), t.Null()])),
               position: t.Optional(t.Number()),
             })
           ),
@@ -119,6 +120,7 @@ export const ProductModel = {
             t.Object({
               valueEn: t.String(),
               valueAr: t.String(),
+              hex: t.Optional(t.Union([t.String(), t.Null()])),
               position: t.Optional(t.Number()),
             })
           ),

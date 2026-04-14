@@ -257,6 +257,7 @@ export abstract class ProductService {
                   create: opt.values.map((v) => ({
                     valueEn: v.valueEn,
                     valueAr: v.valueAr,
+                    hex: v.hex,
                     position: v.position ?? 0,
                   })),
                 },
@@ -313,7 +314,42 @@ export abstract class ProductService {
       include: PRODUCT_INCLUDE,
     });
 
-    return { ok: true as const, data: transformProduct(product) };
+    // Auto-link variants to option values based on their names
+    if (options && options.length > 0 && product.variants.length > 0) {
+      const allOptionValues = await prisma.productOptionValue.findMany({
+        where: { option: { productId: product.id } },
+      });
+
+      for (const variant of product.variants) {
+        // Skip if optionValues were already connected via explicit IDs
+        if (variant.optionValues && variant.optionValues.length > 0) {
+          continue;
+        }
+
+        const variantPartsEn = variant.nameEn.split(" / ").map(p => p.trim());
+        const matchingValues = allOptionValues.filter(ov => 
+          variantPartsEn.includes(ov.valueEn.trim())
+        );
+
+        if (matchingValues.length > 0) {
+          await prisma.productVariant.update({
+            where: { id: variant.id },
+            data: {
+              optionValues: {
+                connect: matchingValues.map(v => ({ id: v.id }))
+              }
+            }
+          });
+        }
+      }
+    }
+
+    const finalProduct = await prisma.product.findUnique({
+      where: { id: product.id },
+      include: PRODUCT_INCLUDE,
+    });
+
+    return { ok: true as const, data: transformProduct(finalProduct) };
   }
 
   static async update(id: string, body: ProductModel["updateBody"]) {
@@ -323,7 +359,7 @@ export abstract class ProductService {
     });
     if (!existing) return null;
 
-    const { fashionAttributes, occasionIds, occasionPositions, ...restBody } = body;
+    const { fashionAttributes, occasionIds, occasionPositions, options, customFields, ...restBody } = body;
     const updateData: Record<string, unknown> = { ...restBody };
     if (body.nameEn) {
       updateData.slug = slugify(body.nameEn);
@@ -396,12 +432,100 @@ export abstract class ProductService {
       });
     }
 
+    // Update options if provided - need to delete existing and create new
+    if (options) {
+      // Delete existing option values first (cascade will handle this, but we need to delete options)
+      await prisma.productOption.deleteMany({ where: { productId: id } });
+      // Create new options with values
+      if (options.length > 0) {
+        await prisma.productOption.createMany({
+          data: options.map((opt) => ({
+            productId: id,
+            nameEn: opt.nameEn,
+            nameAr: opt.nameAr,
+            position: opt.position ?? 0,
+          })),
+        });
+        // Now create option values for each option
+        const createdOptions = await prisma.productOption.findMany({
+          where: { productId: id },
+          orderBy: { position: 'asc' },
+        });
+        for (let i = 0; i < options.length; i++) {
+          const opt = options[i];
+          const createdOpt = createdOptions[i];
+          if (opt.values && opt.values.length > 0) {
+            await prisma.productOptionValue.createMany({
+              data: opt.values.map((v) => ({
+                optionId: createdOpt.id,
+                valueEn: v.valueEn,
+                valueAr: v.valueAr,
+                hex: v.hex,
+                position: v.position ?? 0,
+              })),
+            });
+          }
+        }
+      }
+    }
+
+    // Update customFields if provided
+    if (customFields !== undefined) {
+      await prisma.productCustomField.deleteMany({ where: { productId: id } });
+      if (customFields.length > 0) {
+        await prisma.productCustomField.createMany({
+          data: customFields.map((field) => ({
+            productId: id,
+            ...field,
+          })),
+        });
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: updateData,
       include: PRODUCT_INCLUDE,
     });
-    return { ok: true as const, data: transformProduct(product) };
+
+    // Auto-link variants to option values based on their names
+    // For a variant named "Tomato / Small 52", it should link to "Tomato" and "Small 52" option values
+    if (options && options.length > 0 && product.variants.length > 0) {
+      // Get all option values for this product
+      const allOptionValues = await prisma.productOptionValue.findMany({
+        where: { option: { productId: id } },
+      });
+
+      for (const variant of product.variants) {
+        // Split variant name by " / " to get individual option value names
+        const variantPartsEn = variant.nameEn.split(" / ").map(p => p.trim());
+        
+        // Find matching option values for this variant
+        const matchingValues = allOptionValues.filter(ov => 
+          variantPartsEn.includes(ov.valueEn.trim())
+        );
+
+        if (matchingValues.length > 0) {
+          // Connect the matching option values to the variant
+          await prisma.productVariant.update({
+            where: { id: variant.id },
+            data: {
+              optionValues: {
+                set: matchingValues.map(v => ({ id: v.id }))
+              }
+            }
+          });
+        }
+      }
+    }
+
+    // Return the updated product with the new variant links
+    const finalProduct = await prisma.product.findUnique({
+      where: { id },
+      include: PRODUCT_INCLUDE,
+    });
+
+    return { ok: true as const, data: transformProduct(finalProduct) };
   }
 
   static async delete(id: string) {

@@ -98,84 +98,87 @@ export function VariantMatrix({ variants, options, onChange, onUploadRequest }: 
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[200px]">Variant / Name</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Media</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {variants.map((v, idx) => (
-              <TableRow key={idx}>
-                <TableCell>
-                  <div className="space-y-1">
-                    <Input
-                      value={v.nameEn}
-                      onChange={(e) => updateVariant(idx, "nameEn", e.target.value)}
-                      placeholder="e.g. Small / 52"
-                    />
-                    <Input
-                      value={v.nameAr}
-                      onChange={(e) => updateVariant(idx, "nameAr", e.target.value)}
-                      placeholder="صغير / ٥٢"
-                      dir="rtl"
-                      className="text-xs h-8"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Input
-                    value={v.sku}
-                    onChange={(e) => updateVariant(idx, "sku", e.target.value)}
-                    className="w-[120px]"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Input
-                    type="number"
-                    value={v.price}
-                    onChange={(e) => updateVariant(idx, "price", e.target.value)}
-                    className="w-[100px]"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Input
-                    type="number"
-                    value={v.stock}
-                    onChange={(e) => updateVariant(idx, "stock", e.target.value)}
-                    className="w-[80px]"
-                  />
-                </TableCell>
-                <TableCell>
-                  {v.id ? (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => onUploadRequest(v.id!)}>
-                      <LinkIcon className="h-3 w-3 mr-1" /> Images
-                    </Button>
-                  ) : (
-                    <span className="text-[10px] text-muted-foreground uppercase">Save first</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Switch
-                    checked={v.isActive}
-                    onCheckedChange={(val) => updateVariant(idx, "isActive", val)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeVariant(idx)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </TableCell>
+        <div className="rounded-md border overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[250px]">Variant / Name</TableHead>
+                <TableHead className="min-w-[140px]">SKU</TableHead>
+                <TableHead className="min-w-[120px]">Price</TableHead>
+                <TableHead className="min-w-[100px]">Stock</TableHead>
+                <TableHead className="min-w-[100px]">Media</TableHead>
+                <TableHead className="min-w-[80px]">Active</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {variants.map((v, idx) => (
+                <TableRow key={idx} className="h-auto">
+                  <TableCell className="align-top p-2">
+                    <div className="flex flex-col gap-1 min-w-[200px]">
+                      <Input
+                        value={v.nameEn}
+                        onChange={(e) => updateVariant(idx, "nameEn", e.target.value)}
+                        placeholder="e.g. Small / 52"
+                        className="h-9"
+                      />
+                      <Input
+                        value={v.nameAr}
+                        onChange={(e) => updateVariant(idx, "nameAr", e.target.value)}
+                        placeholder="صغير / ٥٢"
+                        dir="rtl"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="align-top p-2">
+                    <Input
+                      value={v.sku}
+                      onChange={(e) => updateVariant(idx, "sku", e.target.value)}
+                      className="w-full h-9"
+                    />
+                  </TableCell>
+                  <TableCell className="align-top p-2">
+                    <Input
+                      type="number"
+                      value={v.price}
+                      onChange={(e) => updateVariant(idx, "price", e.target.value)}
+                      className="w-full h-9"
+                    />
+                  </TableCell>
+                  <TableCell className="align-top p-2">
+                    <Input
+                      type="number"
+                      value={v.stock}
+                      onChange={(e) => updateVariant(idx, "stock", e.target.value)}
+                      className="w-full h-9"
+                    />
+                  </TableCell>
+                  <TableCell className="align-top p-2">
+                    {v.id ? (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => onUploadRequest(v.id!)}>
+                        <LinkIcon className="h-3 w-3 mr-1" /> Images
+                      </Button>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground uppercase">Save first</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="align-top p-2">
+                    <Switch
+                      checked={v.isActive}
+                      onCheckedChange={(val) => updateVariant(idx, "isActive", val)}
+                    />
+                  </TableCell>
+                  <TableCell className="align-top p-2">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeVariant(idx)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
         {variants.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">

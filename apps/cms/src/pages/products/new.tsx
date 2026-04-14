@@ -174,6 +174,7 @@ export function NewProductPage() {
           values: opt.values.map(v => ({
             valueEn: v.valueEn,
             valueAr: v.valueAr,
+            hex: v.hex,
             position: v.position
           }))
         })),
@@ -242,7 +243,7 @@ export function NewProductPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-20">
+    <div className="max-w-7xl mx-auto pb-20">
       <div className="flex items-center gap-4 mb-8">
         <Button variant="ghost" size="icon" asChild>
           <Link to="/products">
@@ -257,7 +258,7 @@ export function NewProductPage() {
 
       <form onSubmit={handleSubmit}>
         <Tabs defaultValue="basic" className="space-y-8">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl bg-muted/50 p-1">
+          <TabsList className="grid grid-cols-5 w-full bg-muted/50 p-1">
             <TabsTrigger value="basic">General</TabsTrigger>
             <TabsTrigger value="media">Media ({stagedImages.length})</TabsTrigger>
             <TabsTrigger value="variants">Options & Variants</TabsTrigger>
